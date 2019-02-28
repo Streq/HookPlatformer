@@ -1,6 +1,6 @@
 require = {
     //By default load any module IDs from src/app
-    baseUrl: '/',
+    baseUrl: './',
     //except, if the module ID starts with "dep",
     //load it from the src/dependencies directory. paths
     //config is relative to the baseUrl, and
