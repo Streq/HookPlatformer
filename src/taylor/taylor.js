@@ -3,6 +3,7 @@ define([], function () {
         constructor(x, y) {
             this.speed = 100;
             this.jumpspeed = 100;
+            this.grounded = true;
             this.pos = {
                 x: x || 0,
                 y: y || 0
@@ -11,6 +12,10 @@ define([], function () {
                 x: 0,
                 y: 0
             };
+            this.frameVelocity = {
+                x: 0,
+                y: 0
+            }
             this.dir = 1;
         }
 		init(){
@@ -33,6 +38,8 @@ define([], function () {
             this.state.command(cmd);
         }
         update(dt) {
+            this.frameVelocity.x = 0;
+            this.frameVelocity.y = 0;
             this.state.update(dt);
         }
     }
@@ -42,7 +49,10 @@ define([], function () {
             this.entity = e;
         }
         update() {
-
+            let e = this.entity;
+            if (!e.grounded) {
+                e.setState(Air);
+            }
         }
         command(cmd) {
             let e = this.entity;
@@ -70,7 +80,11 @@ define([], function () {
             this.entity = e;
         }
         update(dt) {
-            this.entity.velocity.x = this.entity.speed;
+            let e = this.entity;
+            e.frameVelocity.x += e.speed*e.dir;
+            if (!e.grounded) {
+                e.setState(Air);
+            }
         }
         command(cmd) {
             let e = this.entity;
@@ -86,6 +100,9 @@ define([], function () {
                         e.setFacing("right");
                         e.setState(Running);
                     }
+                    break;
+                case "neutralH":
+                    e.setState(Idle);
                     break;
                 case "up":
                     e.setState(Jumping);
@@ -141,6 +158,31 @@ define([], function () {
                     e.setFacing("right");
                     this.move = 1;
                     break;
+                case "neutralH":
+                    this.move = 0;
+                    break;
+            }
+        }
+    }
+    
+    class Crouching {
+        constructor(e) {
+            this.entity = e;
+        }
+        update() {
+            let e = this.entity;
+            if (!e.grounded) {
+                e.setState(Air);
+            }
+
+        }
+        command(cmd) {
+            let e = this.entity;
+            this.move = 0;
+            switch (cmd) {
+                case "neutralV":{
+                    e.setState(Idle);
+                }
             }
         }
     }
