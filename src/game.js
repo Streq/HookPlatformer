@@ -1,6 +1,7 @@
-define(["utils/index"
-        , "taylor/taylor"],
-    function (Utils, Player) {
+define( [ "utils/index"
+        , "taylor/taylor"
+	    , "input"],
+    function (Utils, Player, Input) {
         let Vector = Utils.Vector,
             Dom = Utils.Dom,
             Loop = Utils.Loop;
@@ -14,72 +15,26 @@ define(["utils/index"
                 this.hh = hh;
             }
         }
-
-        class Controller {
-            constructor() {
-                this.buffer = [];
-                
-                this.keymap = {
-                    "up": "ArrowUp",
-                    "down": "ArrowDown",
-                    "left": "ArrowLeft",
-                    "right": "ArrowRight",
-                    "A": "z",
-                    "B": "x"
-                }
-                this.buttonState = {
-                    "up": false,
-                    "down": false,
-                    "left": false,
-                    "right": false,
-                    "A": false,
-                    "B": false
-                }
-                this.lastInput = null;
-            }
-            onkeydown(event) {
-                let km = this.keymap;
-                for(var button in km){
-                    let key = km[button];
-                    if(key==event.key){
-                        this.setInput(button, true);
-                    }
-                }
-            }
-            onkeyup(event) {
-                let km = this.keymap;
-                for(var button in km){
-                    let key = km[button];
-                    if(key==event.key){
-                        this.setInput(button, false);
-                    }
-                }
-            }
-            setInput(key, pressed) {
-                this.buttonState[key] = pressed;
-            }
-            update(){
-                let ks = this.buttonState;
-                let frameInput = {
-                    x: +ks["right"]-ks["left"],
-                    y: +ks["down"]-ks["up"],
-                    A: ks["A"],
-                    B: ks["B"]
-                };
-                this.lastInput = frameInput;
-                this.buffer.push(frameInput);
-            }
-        }
-
+		
         class Game {
             constructor() {
-                this.controller = new Controller();
-                this.world = {
-                    blocks: [new Rect(24, 24, 8, 8)],
-                    player: new Player(8, 8),
-                }
-                this.world.player.init();
-                let canvas = Dom.create(
+                this.input = new Input.UserInputSource({
+					keymap:{
+						"U": "ArrowUp",
+						"D": "ArrowDown",
+						"L": "ArrowLeft",
+						"R": "ArrowRight",
+
+						"a": "z",
+						"b": "x",
+						"c": "c",
+						"x": "a",
+						"y": "s",
+						"z": "d"
+					}
+                });
+				
+				let canvas = Dom.create(
                     `<canvas 
                         width = 768, 
                         height = 512 
@@ -87,44 +42,54 @@ define(["utils/index"
                         tabindex = -1
                     ></canvas>`
                 );
-
-                canvas.addEventListener("keydown", (event) => this.controller.onkeydown(event));
-                canvas.addEventListener("keyup", (event) => this.controller.onkeyup(event));
-
-                this.rendering = {
+				this.rendering = {
                     canvas: canvas,
                     ctx: canvas.getContext("2d"),
                 };
                 document.body.appendChild(canvas);
-
+				this.input.listen(canvas);
+                
+				this.world = {
+                    blocks: [new Rect(24, 24, 8, 8)],
+                    player: new Player(8, 8),
+                }
+                this.world.player.init();
+                
             }
 
             run() {
                 this.world.player.init();
                 new Loop.RAF((dt) => this.update(dt * 0.001), () => this.render(), 60).start();
-
             }
-
+			
             handleInput() {
-                let input = this.controller.lastInput;
-                let p = this.world.player;
-                if(input.y<0){p.command("up");}
-                if(input.y>0){p.command("down");}
-                if(input.y==0){p.command("neutralV");}
-                if(input.x<0){p.command("left");}
-                if(input.x>0){p.command("right");}
-                if(input.x==0){p.command("neutralH");}
-                
+                let input = this.input.getFrameInput();
+                let dir = {
+					x: +(input.R||0)-(input.L||0),
+					y: +(input.D||0)-(input.U||0)
+				}
+				let p = this.world.player;
+                if(dir.y<0){p.command("up");}
+                if(dir.y>0){p.command("down");}
+                if(dir.y==0){p.command("neutralV");}
+                if(dir.x<0){p.command("left");}
+                if(dir.x>0){p.command("right");}
+                if(dir.x==0){p.command("neutralH");}
+                if(input.A){p.command("A");}
+                if(input.B){p.command("B");}
             }
 
             update(dt) {
-                this.controller.update();
                 this.handleInput();
-                let p = this.world.player;
+                
+				let p = this.world.player;
                 p.update(dt);
                 let oldpos = p.pos;
-                p.pos.x += (p.velocity.x+p.frameVelocity.x) * dt;
-                p.pos.y += (p.velocity.y+p.frameVelocity.y) * dt;
+                
+				p.pos.x += (p.velocity.x + p.frameVelocity.x) * dt;
+                p.pos.y += (p.velocity.y + p.frameVelocity.y) * dt;
+				
+				
             }
             render() {
                 /** @type {CanvasRenderingContext2D} */
