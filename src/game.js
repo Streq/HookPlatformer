@@ -1,18 +1,19 @@
 define( [ "utils/index"
         , "taylor/taylor"
-	    , "input"],
-    function (Utils, Player, Input) {
+	    , "input"
+		, "physics/collision"],
+    function (Utils, Player, Input, Collision) {
         let Vector = Utils.Vector,
             Dom = Utils.Dom,
             Loop = Utils.Loop;
 
 
         class Rect {
-            constructor(x, y, hw, hh) {
+            constructor(x, y, w, h) {
                 this.x = x;
                 this.y = y;
-                this.hw = hw;
-                this.hh = hh;
+                this.w = w;
+                this.h = h;
             }
         }
 		
@@ -50,7 +51,10 @@ define( [ "utils/index"
 				this.input.listen(canvas);
                 
 				this.world = {
-                    blocks: [new Rect(24, 24, 8, 8)],
+                    blocks: [
+						new Rect(24, 24, 8, 8),
+						new Rect(8, 128, 8, 8)
+					],
                     player: new Player(8, 8),
                 }
                 this.world.player.init();
@@ -81,14 +85,27 @@ define( [ "utils/index"
 
             update(dt) {
                 this.handleInput();
-                
-				let p = this.world.player;
-                p.update(dt);
+                let w = this.world;
+				let p = w.player;
+                let bs = w.blocks;
+				
+				p.update(dt);
                 let oldpos = p.pos;
                 
 				p.pos.x += (p.velocity.x + p.frameVelocity.x) * dt;
                 p.pos.y += (p.velocity.y + p.frameVelocity.y) * dt;
 				
+				let s = 8;
+				let pBox = new Rect(p.pos.x, p.pos.y, s, s);
+				
+				w.blocks.forEach((b)=>{
+					let tocan = Collision.boxBox(b,pBox);
+					
+					if(tocan){
+						p.velocity.y = 0;
+						p.pos.y = b.y - s;
+					}
+				});
 				
             }
             render() {
@@ -101,13 +118,13 @@ define( [ "utils/index"
             renderWorld(ctx) {
                 ctx.fillStyle = "blue";
                 this.world.blocks.forEach((e) => {
-                    ctx.fillRect(e.x - e.hw, e.y - e.hh, e.hw * 2, e.hh * 2);
+                    ctx.fillRect(e.x, e.y, e.w, e.h);
                 });
 
                 ctx.fillStyle = "green";
                 let e = this.world.player
                 let s = 8;
-                ctx.fillRect(e.pos.x - s, e.pos.y - s, s * 2, s * 2);
+                ctx.fillRect(e.pos.x, e.pos.y, s, s);
 
             }
         }

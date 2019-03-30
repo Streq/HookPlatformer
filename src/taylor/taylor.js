@@ -40,6 +40,7 @@ define([], function () {
         update(dt) {
             this.frameVelocity.x = 0;
             this.frameVelocity.y = 0;
+			this.velocity.y += 1000*dt;
             this.state.update(dt);
         }
     }
@@ -139,12 +140,11 @@ define([], function () {
         update() {
             let e = this.entity;
             if (this.move) {
-                this.entity.velocity.x = this.entity.speed * d;
+				e.frameVelocity.x += e.speed*e.dir;
             }
             if (e.grounded) {
                 e.setState(Idle);
             }
-
         }
         command(cmd) {
             let e = this.entity;

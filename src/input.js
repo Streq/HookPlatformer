@@ -2,18 +2,21 @@ define(["utils/index"],
     function (Utils) {
 		
 		const EVENT_NAMES = ["keyup","keydown"];
+		
 	
+		// listens to events on keyboard
 		class UserInputSource{
 			constructor(config){
 				this.config = config;
 				this.inputState = {};
-				this.binds = {
-					keyup: (e) => this.onkeyup(e),
-					keydown: (e) => this.onkeydown(e),
-				};
+				
+				this.binds = {};
+				EVENT_NAMES.forEach(e => {
+					this.binds[e] = (event => this[e](event))
+				});
 			}
 			
-			onkeydown(event) {
+			keydown(event) {
 				let km = this.config.keymap;
 				for(var button in km){
 					let key = km[button];
@@ -22,7 +25,7 @@ define(["utils/index"],
 					}
 				}
 			}
-			onkeyup(event) {
+			keyup(event) {
 				let km = this.config.keymap;
 				for(var button in km){
 					let key = km[button];
@@ -38,16 +41,15 @@ define(["utils/index"],
 			
 			/** @param {HTMLCanvasElement} canvas */
 			listen(canvas){
-				let binds = this.binds;
-				EVENT_NAMES.forEach((each) => canvas.addEventListener(each, binds[each]));
+				EVENT_NAMES.forEach((each) => canvas.addEventListener(each, this.binds[each]));
 			}
 			/** @param {HTMLCanvasElement} canvas */
 			stopListen(canvas){
-				let binds = this.binds;
-				EVENT_NAMES.forEach((each) => canvas.removeEventListener(each, binds[each]));
+				EVENT_NAMES.forEach((each) => canvas.removeEventListener(each, this.binds[each]));
 			}
 		}
 	
+		//pre recorded inputs
 		class RecordedInputSource{
 			constructor(inputs){
 				this.inputs = inputs;
