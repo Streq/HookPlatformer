@@ -7,13 +7,12 @@ var Game = (() => {
 			this.world = {
 				player: null,
 				entities: [],
-				staticGrid: [],
+				staticGrid: new SingleArrayGrid(11),
 				gridSize: 8
 			};
 			let setGrid = (x, y, val) => {
 				let g = this.world.staticGrid;
-				let row = g[y] = g[y] || [];
-				row[x] = val;
+				g.set(x,y,val)
 			}
 			setGrid(0, 5, true);
 			setGrid(5, 5, true);
@@ -60,13 +59,8 @@ var Game = (() => {
 			ctx.fillStyle = "#00f";
 			let grid = this.world.staticGrid;
 			let s = this.world.gridSize;
-			grid.forEach((row, j) => {
-				if (!row) return;
-				row.forEach((tile, i) => {
-					if (!tile) return;
-					ctx.fillRect(i * s, j * s, s, s);
-				})
-			});
+			grid.forEach((tile,x,y)=>ctx.fillRect(x * s, y * s, s, s));
+			
 
 		}
 	};
