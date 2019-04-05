@@ -2,23 +2,37 @@
 //GAME
 ////////////////////////////////////////////////////////////////
 var Game = (() => {
+    const TYPES = {
+        NONE : 0,
+        BLOCK : 1,
+        LAVA : 2,
+        GOAL : 3
+    };
+    const COLORS = [
+        "#0000",
+        "#888",
+        "#f00",
+        "#00f"
+    ];
+    
 	return {
 		init() {
 			this.world = {
 				player: null,
 				entities: [],
-				staticGrid: new SingleArrayGrid(11),
+				staticGrid: new SingleArrayGrid(32),
 				gridSize: 8
 			};
 			let setGrid = (x, y, val) => {
 				let g = this.world.staticGrid;
 				g.set(x,y,val)
 			}
-			setGrid(0, 5, true);
-			setGrid(5, 5, true);
-			setGrid(7, 5, true);
-			setGrid(9, 5, true);
-			setGrid(10, 5, true);
+			setGrid(0, 5, TYPES.BLOCK);
+			setGrid(5, 5, TYPES.BLOCK);
+			setGrid(7, 5, TYPES.BLOCK);
+			setGrid(9, 5, TYPES.BLOCK);
+			setGrid(15, 5, TYPES.GOAL);
+			setGrid(10, 9, TYPES.LAVA);
 
 			this.x = 0;
 			this.y = 0;
@@ -52,14 +66,16 @@ var Game = (() => {
 
 			//render player
 			ctx.clearRect(0, 0, CONSTS.WIDTH, CONSTS.WIDTH);
-			ctx.fillStyle = "#0f0";
+			ctx.fillStyle = "#fff";
 			ctx.fillRect(this.x, this.y, 8, 8);
 
 			//render grid
-			ctx.fillStyle = "#00f";
 			let grid = this.world.staticGrid;
 			let s = this.world.gridSize;
-			grid.forEach((tile,x,y)=>ctx.fillRect(x * s, y * s, s, s));
+			grid.forEach((tile,x,y)=>{
+                ctx.fillStyle = COLORS[tile];
+                ctx.fillRect(x * s, y * s, s, s);
+            });
 			
 
 		}
