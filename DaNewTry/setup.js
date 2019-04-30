@@ -308,3 +308,11 @@ class SingleArrayGrid{
         g.forEach((tile, i) => callback(tile, i%this.width, Math.trunc(i/this.width)));
     }
 }
+
+
+////////////////////////////////////////////////////////////////
+//MATH UTILS
+////////////////////////////////////////////////////////////////
+var Math2 = {
+	floor(n){return Math.ceil(n-1);}
+}

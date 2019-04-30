@@ -28,6 +28,45 @@ var Game = (() => {
 		}
 	}
 	
+	const atomicDistance = 1;
+	
+	
+	function moveAABBinGrid(b, dx, dy, grid, ts){
+		//front vertex
+		let fvx,
+			fvy,
+		//next tile
+			ntx,
+			nty,
+		//distance
+			distx,
+			disty;
+			
+		if(dx<0){
+			fvx = b.x;
+			ntx = Math.floor(fvx/ts)-1;
+		} else {
+			fvx = b.x + b.w;
+			ntx = Math.ceil(fvx/ts);
+		}
+		distx = ntx*ts - fvx;
+		
+		if(dy<0){
+			fvy = b.y;
+			nty = Math.floor(fvy/ts)-1;
+		} else {
+			fvy = b.y + b.h;
+			nty = Math.ceil(fvy/ts);
+		}
+		disty = nty*ts - fvy;
+		
+		//find next grid axis
+		let timeDistx = dx ? distx/dx : Infinity;
+		let timeDisty = dy ? disty/dy : Infinity;
+		
+		
+	}
+	
 	return {
 		init() {
 			this.world = {
@@ -48,11 +87,28 @@ var Game = (() => {
 			g.set(9, 5, TYPES.BLOCK);
 			g.set(10, 5, TYPES.BLOCK);
 			g.set(15, 5, TYPES.GOAL);
-			for(var i = 0; i < 32; ++i){
+			for(var i = 0; i < 20; ++i){
 				g.set(i, 31, TYPES.LAVA);
 			}
 			
-			this.player=new Player(0,0);
+			for(var i = 0; i < 20; ++i){
+				g.set(20, i, TYPES.BLOCK);
+			}
+			
+			for(var i = 0; i < 20; ++i){
+				g.set(0, i, TYPES.BLOCK);
+			}
+			
+			for(var i = 0; i < 20; ++i){
+				g.set(i, 20, TYPES.BLOCK);
+			}
+			
+			for(var i = 0; i < 20; ++i){
+				g.set(i, 0, TYPES.BLOCK);
+			}
+			
+			
+			this.player=new Player(5*8,2*8);
 			
 		},
 
@@ -68,8 +124,8 @@ var Game = (() => {
 				dir.x *= Math.SQRT1_2;
 				dir.y *= Math.SQRT1_2;
 			}
-			dir.x*=8;
-			dir.y*=8;
+			dir.x*=4;
+			dir.y*=4;
 			
 			//set velocities
 			p.vx = dir.x;
@@ -92,14 +148,118 @@ var Game = (() => {
 				}
 			});
 			
-			//move
-			p.x+=p.vx;
+			if(p.vy>0){
+				let dy = p.vy;
+				let ys = p.y+p.h;
+				let y0 = Math2.floor(ys/gs);
+				let y1 = Math2.floor((ys+dy)/gs);
+				
+				let x0a = Math.floor(p.x/gs);
+				let x0b = Math2.floor((p.x+p.w)/gs);
+				
+				let dist = y1 - y0;
+				
+				let col = false;
+				for(let j = y0; j <= y1; ++j){
+					for(let i = x0a; i <= x0b; ++i){
+						if(this.world.staticGrid.get(i,j)==TYPES.BLOCK){
+							col = true;
+							p.vy = 0;
+							p.y = j*gs-p.h;
+						}
+						if(col)break;
+					}
+					if(col)break;
+				}
+				
+			}
+			if(p.vy<0){
+				let dy = p.vy;
+				let ys = p.y;
+				let y0 = Math2.floor(ys/gs);
+				let y1 = Math2.floor((ys+dy)/gs);
+				
+				let x0a = Math.floor(p.x/gs);
+				let x0b = Math2.floor((p.x+p.w)/gs);
+				
+				let dist = -y1 + y0;
+				
+				let col = false;
+				for(let i = y0; i >= y1; --i){
+					for(let j = x0a; j <= x0b; ++j){
+						if(this.world.staticGrid.get(j,i)==TYPES.BLOCK){
+							col = true;
+							p.vy = 0;
+							p.y = (i+1)*gs;
+						
+						}
+						if(col)break;
+					}
+					if(col)break;
+				}
+				
+			}
 			p.y+=p.vy;
 			
+			if(p.vx>0){
+				let dy = p.vx;
+				let ys = p.x+p.w;
+				let y0 = Math2.floor(ys/gs);
+				let y1 = Math2.floor((ys+dy)/gs);
+				
+				let x0a = Math.floor(p.y/gs);
+				let x0b = Math2.floor((p.y+p.h)/gs);
+				
+				let dist = y1 - y0;
+				
+				let col = false;
+				for(let i = y0; i <= y1; ++i){
+					for(let j = x0a; j <= x0b; ++j){
+						if(this.world.staticGrid.get(i,j)==TYPES.BLOCK){
+							col = true;
+							p.vx = 0;
+							p.x = i*gs-p.w;
+						
+						}
+						if(col)break;
+					}
+					if(col)break;
+				}
+				
+			}
+			
+			if(p.vx<0){
+				let dy = p.vx;
+				let ys = p.x;
+				let y0 = Math2.floor(ys/gs);
+				let y1 = Math2.floor((ys+dy)/gs);
+				
+				let x0a = Math.floor(p.y/gs);
+				let x0b = Math2.floor((p.y+p.h)/gs);
+				
+				let dist = -y1 + y0;
+				
+				let col = false;
+				for(let i = y0; i >= y1; --i){
+					for(let j = x0a; j <= x0b; ++j){
+						if(this.world.staticGrid.get(i,j)==TYPES.BLOCK){
+							col = true;
+							p.vx = 0;
+							p.x = (i+1)*gs;
+						
+						}
+						if(col)break;
+					}
+					if(col)break;
+				}
+				
+			}
+			//move
+			p.x+=p.vx;
+			
 		},
-		
 		die(){
-			this.player = new Player(0,0);
+			this.player = new Player(5*8,2*8);
 		},
 		
 		render(ctx) {
@@ -118,6 +278,21 @@ var Game = (() => {
             });
 			
 
+		},
+		
+		solveCollisionsGrid(){
+			let p = this.player,
+				dx = p.vx,
+				dy = p.vy,
+				world = this.world,
+				gs = world.gridSize;
+			
+			while(dx!=0 && dy!=0){
+				//get side of collision
+				
+			}
 		}
+		
 	};
+	
 })();

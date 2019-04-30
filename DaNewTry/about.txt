@@ -1,0 +1,33 @@
+Platformer:
+
+Descripción:
+Sos un cuadrado blanco
+El objetivo es completar una serie de niveles
+cada nivel tiene un punto de entrada, en el cual spawnea el jugador, y uno de salida, el cual te lleva al siguiente nivel.
+
+
+Mecánicas:
+◄,► - te movés
+▲ - saltás
+▼ - caés más rápido
+shift - mientras tocás una pared o techo te quedás agarrado y te podés mover tangencialmente al muro
+F - tirás una soga en la dirección que estás apretando
+
+Si la soga se agarra a algo quedás agarrado:
+◄,► - te hamacás
+▲ - si la soga está tensa saltás en la dirección de la soga
+▼ - desenrollás la soga
+shift - enrollás la soga
+soltar F - soltás la soga
+
+
+Objetos de nivel:
+spawn - el punto donde spawnea el jugador
+muro - bloque en el que podés tocar y tirar la soga
+lava - bloque que al tocarlo te mata, la soga no se agarra
+gol - bloque de punto de salida, te lleva al prox nivel, la soga no se agarra
+
+texto:
+texto estático - siempre está visible en el mismo lugar
+texto dinámico - es visible con posición relativa al mundo dependiendo un trigger
+texto ui - es visible con posición relativa a la pantalla dependiendo un trigger
