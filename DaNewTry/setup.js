@@ -314,5 +314,27 @@ class SingleArrayGrid{
 //MATH UTILS
 ////////////////////////////////////////////////////////////////
 var Math2 = {
-	floor(n){return Math.ceil(n-1);}
+	//like Math.floor but integers are rounded down
+	floor(n){return Math.ceil(n-1);},
+	getDecimalPart(n){return n-Math.trunc(n);},
+	approach(value, target, amount){
+		return (
+			(value < target) 
+				? Math.min(value+amount, target) 
+				: Math.max(value-amount, target)
+		);
+	},
+	approachSum(value,target,amount){
+		return (
+			(value < target) 
+				? Math.min(value+amount, target) 
+				: Math.max(value+amount, target)
+		);
+	},
+	clamp(v,a,b){
+		return Math.min(Math.max(a, v), b);
+	},
+	clampWithSort(v,a,b){
+		return Math2.clamp(v, Math.min(a, b), Math.max(a, b));
+	}
 }
