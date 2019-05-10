@@ -250,7 +250,7 @@ var Collision = (() => {
 	//(12.9,2.4)
 
 	//primer octante (dx y dy positivos, dx > dy)
-	function rasterizeLine(x0, y0, x1, y1, callback) {
+	function rasterizeLineOld(x0, y0, x1, y1, callback) {
 		let dx = x1 - x0;
 		let dy = y1 - y0;
 
@@ -282,6 +282,44 @@ var Collision = (() => {
 		}
 
 	}
+	
+	function rasterizeLine(x0, y0, x1, y1, callback) {
+		let dx = x1 - x0;
+		let dy = y1 - y0;
+		
+		let sx = Math.sign(dx);
+		let sy = Math.sign(dy);
+		
+		let m = dx / Math.abs(dy); //= 5.375
+
+		let yb = sy > 0 ? (Math2.ceil(y0) - y0) : (y0-Math.floor(y0));
+		let xb = x0 + yb * m; // 3.4+0.9*5.375 // 8.2375
+
+		let i = Math.floor(x0)
+		let j = Math.floor(y0);
+
+		let j1 = Math.floor(y1);
+		let i1 = Math.floor(xb);
+		while (j != j1) {
+			//de (3.4, 2.1) a (8.23, 3) avanzamos de x=3 a x=8 y recien despues de eso de y=2 a y=3
+
+			callback(i, j);
+			i1 = Math.floor(xb);
+			while (i != i1) {
+				callback(i+=sx, j);
+			}
+			j+=sy;
+			//de (8.23, 3) a (13.605, 4)
+			xb = xb + m;
+		}
+		i1 = Math.floor(x1);
+		callback(i, j);
+		while (i != i1) {
+			callback(i+=sx, j);
+		}
+
+	}
+	
 	
 	function rasterizeBox(x, y, w, h, callback){
 		let i1 = Math2.floor(x+w);
