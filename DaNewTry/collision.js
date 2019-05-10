@@ -246,129 +246,6 @@ var Collision = (() => {
 		);
 	}
 	
-	/** checks a box against a grid of squares
-	* @param grid is an array of squares each with size 1, false values mean empty slots
-	* @param tilesPerLine how many tiles in a line, in order to calculate y position by index
-	*/
-	function boxGrid(x, y, w, h, tilesPerLine, grid){
-		let x0 = Math.floor(x);
-		let y0 = Math.floor(y);
-		let x1 = Math.ceil(x+w-1);
-		let y1 = Math.ceil(y+h-1);
-		
-		for(var j = y0; j <= y1; ++j){
-			for(var i = x0; i <= x1; ++i){
-				var tile = grid[i+j*tilesPerLine];
-				if(tile){
-					return {
-						tile:tile,
-						x:i,
-						y:j
-					};
-				}
-			}
-		}
-		return false;
-	}
-	
-	function lineToGridTiles(a,b,c,d){
-		let dx = c-a;
-		let dy = b-d;
-		
-	}
-	
-	function boxGridMoving(x,y,hw,hh,tilesPerLine,grid,dx,dy){
-		let sx = Math.sign(dx);
-		let sy = Math.sign(dy);
-	
-		/*get remainingDistX*/
-		let edgeX = x+sx*hw
-		let nextTileX = Math.min(0,sx) + Math.ceil(edgeX);
-		let rdx = sx*(nextTileX - edgeX);
-		
-		/*get remainingDistY*/
-		let edgeY = y+sy*hh
-		let nextTileY = Math.min(0,sy) + Math.ceil(edgeY);
-		let rdy = sy*(nextTileY - edgeY);
-		
-		
-		let unitX = Math.abs(dx/dy);
-		let unitY = Math.abs(dy/dx);
-		while(dx&&dy){
-			if(rdx/unitX <= rdy/unitY){
-				x += rdx * sx;
-				y += rdx * unitY;
-				//check tiles from (nextTileX, currentTopTile) to (nextTileX, currentBotTile)
-				let i = nextTileX;
-				let j0 = Math.floor(y-hh);
-				let j1 = Math2.floor(y+hh);
-				let j;
-				for(j=j0; j<=j1; ++j){
-					let tile = grid.get(i,j);
-					if(tile){ 
-						return {
-							x:i,
-							y:j,
-							tile:tile
-						}
-					}
-				}
-				dx = Math.approach(dx, 0, rdx);
-				dy = Math.approach(dy, 0, rdx * unitY);
-				rdy -= Math.abs(rdx*unitY);
-				rdx = 1;
-			} else {
-				x += rdy * unitX;
-				y += rdy * sy;
-				//check tiles from (nextTileX, currentTopTile) to (nextTileX, currentBotTile)
-				let j = nextTileY;
-				let i0 = Math.floor(x-hw);
-				let i1 = Math2.floor(x+hw);
-				let i;
-				for(i=i0; i<=i1; ++i){
-					let tile = grid.get(i,j);
-					if(tile){ 
-						return {
-							x:i,
-							y:j,
-							tile:tile
-						}
-					}
-				}
-				dx -= rdx * sx;
-				dy -= rdx * unitY;
-				rdx -= Math.abs(rdy*unitX);
-				rdy = 1;
-			}
-			
-		}
-		return false;
-		/*
-		while(dx && dy){
-		if remainingDistX/dx is lower or equal to remainingDistY/dy
-		 move x by remainingDistX
-		 move y by remainingDistX * 
-		 check tiles from (nextTileX, currentTopTile) to (nextTileX, currentBotTile)
-		 dx -= remainingDistX
-		 dy -= remainingDistX * factor
-
-		 set remainingDistY to remainingDistY - remainingDistX * dy/dx
-		 set remainingDistX to 1
-		else
-		 move y by remainingDistY
-		 move x by remainingDistY * dx/dy
-		 check tiles from (currentLeftTile, nextTileY) to (currentRightTile, nextTileY)
-		 dy -= remainingDistY
-		 dx -= remainingDistY * dx/dy
-
-		 set remainingDistX to remainingDistX - remainingDistY * dx/dy
-		 set remainingDistY to 1
-		}
-		continue until the moved distance in x and y matches dx and dy respectively
-		*/
-		
-	}
-	
 	//la cosa va de (3.4,2.1) a (16.3,4.5)
 	//(12.9,2.4)
 
@@ -379,7 +256,7 @@ var Collision = (() => {
 
 		let m = dx / dy; //= 5.375
 
-		let xb = x0 + (Math.ceil(y0) - y0) * m; // 3.4+0.9*5.375 // 8.2375
+		let xb = x0 + (Math2.ceil(y0) - y0) * m; // 3.4+0.9*5.375 // 8.2375
 
 		let i = Math.floor(x0)
 		let j = Math.floor(y0);
@@ -390,6 +267,51 @@ var Collision = (() => {
 			//de (3.4, 2.1) a (8.23, 3) avanzamos de x=3 a x=8 y recien despues de eso de y=2 a y=3
 
 			callback(i, j);
+			i1 = Math.floor(xb);
+			while (i < i1) {
+				callback(++i, j);
+			}
+			++j;
+			//de (8.23, 3) a (13.605, 4)
+			xb = xb + m;
+		}
+		i1 = Math.floor(x1);
+		callback(i, j);
+		while (i < i1) {
+			callback(++i, j);
+		}
+
+	}
+	
+	function rasterizeBox(x, y, w, h, callback){
+		let i1 = Math2.floor(x+w);
+		let j1 = Math2.floor(y+h); 
+		for(let j = Math.floor(y); j <= j1; ++j)
+			for(let i = Math.floor(x); i <= i1; ++i)
+				callback(i,j);
+	}
+	
+	function rasterizeBoxMoving(x0, y0, w, h, x1, y1, callback){
+		let dx = x1 - x0;
+		let dy = y1 - y0;
+
+		let m = dx / dy; //= 5.375
+
+		let xb = x0 + (Math2.ceil(y0) - y0) * m; // 3.4+0.9*5.375 // 8.2375
+
+		let i = Math.floor(x0)
+		let j = Math.floor(y0);
+
+		let j1 = Math.floor(y1);
+		let i1 = Math.floor(xb);
+
+		rasterizeBox(i,j,w,h,callback);
+		
+		while (j < j1) {
+			//de (3.4, 2.1) a (8.23, 3) avanzamos de x=3 a x=8 y recien despues de eso de y=2 a y=3
+
+			callback(i, j);
+			
 			i1 = Math.floor(xb);
 			while (i < i1) {
 				callback(++i, j);
@@ -422,11 +344,8 @@ var Collision = (() => {
 	mod.getBoundingRange = getBoundingRange;
 	mod.rangeRange = rangeRange;
 	
-	
-	mod.boxGridMoving = boxGridMoving;
-	mod.boxGrid=boxGrid;
-	
 	mod.rasterizeLine = rasterizeLine;
+	mod.rasterizeBoxMoving = rasterizeBoxMoving;
 	
 	return mod;
 })();

@@ -316,6 +316,7 @@ class SingleArrayGrid{
 var Math2 = {
 	//like Math.floor but integers are rounded down
 	floor(n){return Math.ceil(n-1);},
+	ceil(n){return Math.floor(n+1);},
 	getDecimalPart(n){return n-Math.trunc(n);},
 	approach(value, target, amount){
 		return (

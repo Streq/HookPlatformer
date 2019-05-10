@@ -1,0 +1,49 @@
+<html>
+
+<head>
+	<script src="collision.js"></script>
+    <script src="game.js"></script>
+    <script src="setup.js"></script>
+</head>
+
+<body>
+	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
+	
+    <script src="testingRendering.js"></script>
+	<script>
+		let w = 1, h = 1;
+		drawFun = function(a,b,c,d){
+			a*=gs;
+			b*=gs;
+			c*=gs;
+			d*=gs;
+			let w1 = w*gs;
+			let h1 = h*gs;
+			
+			ctx.strokeStyle="yellow";
+		
+			ctx.beginPath();
+			ctx.rect(a,b,w1,h1);
+			ctx.rect(c,d,w1,h1);
+			
+			ctx.moveTo(a,b);
+			ctx.lineTo(c,d);
+			
+			ctx.moveTo(a+w1,b);
+			ctx.lineTo(c+w1,d);
+			
+			ctx.moveTo(a,b+h1);
+			ctx.lineTo(c,d+h1);
+			
+			ctx.moveTo(a+w1,b+h1);
+			ctx.lineTo(c+w1,d+h1);
+			ctx.stroke();
+			ctx.closePath();
+		}
+		
+		rasterizeFun = (x0,y0,x1,y1,callback)=>Collision.rasterizeBoxMoving(x0,y0,w,h,x1,y1,callback);
+	</script>
+</body>
+
+</html>
+
