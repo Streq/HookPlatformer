@@ -41,7 +41,21 @@
 			ctx.closePath();
 		}
 		
-		rasterizeFun = (x0,y0,x1,y1,callback)=>Collision.rasterizeBoxMoving(x0,y0,w,h,x1,y1,callback);
+		rasterizeFun = (x0,y0,x1,y1,callback)=>{
+			Collision.rasterizeBoxMoving(x0,y0,w,h,x1,y1,callback);
+		}
+		
+		e= {
+			x0: 5,
+			y0: 5,
+			x1: -5,
+			y1: 10
+		}
+		function el_error(){
+			rasterize(e.x0,e.y0,e.x1,e.y1);
+		}
+		
+		el_error();
 	</script>
 </body>
 

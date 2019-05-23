@@ -20,17 +20,23 @@ let canvas = document.getElementById("canvas");
 		
 	}
 
+	function drawText(x,y,text){
+		ctx.font = '12px serif';
+		ctx.fillStyle = "white";
+		ctx.fillText(text, x, y+10);
+	}
+
 	let rasterizeFun = Collision.rasterizeLine;
 	let drawFun = drawLine;
 	
 	function rasterize(a,b,c,d){
 		ctx.beginPath();       // Start a new path
-
+		let id = 0;
 		rasterizeFun(a,b,c,d,(i,j)=>{
 			ctx.rect(i*gs,j*gs,gs,gs);
+			ctx.text
+			drawText(i*gs,j*gs,++id);
 		});
-		ctx.fillStyle="blue";
-		ctx.fill();
 		ctx.strokeStyle="red";
 		ctx.stroke();
 		ctx.closePath();
@@ -42,9 +48,10 @@ let canvas = document.getElementById("canvas");
 	let b = Math.random();
 	let c = Math.random()*10;
 	let d = Math.random()*10;
-	rasterize(a,b,a+c,b+d);
+	//rasterize(a,b,a+c,b+d);
 
 	let x0=0, y0=0;
+	/**/
 	document.addEventListener("mousemove",(event)=>{
 		ctx.clearRect(0,0,canvas.width,canvas.height);
 		let pos = getMousePos(canvas,event);
@@ -52,6 +59,7 @@ let canvas = document.getElementById("canvas");
 		let y = pos.y;
 		rasterize(x0/gs,y0/gs,x/gs,y/gs);
 	});
+	
 	document.addEventListener("click",(event)=>{
 		ctx.clearRect(0,0,canvas.width,canvas.height);
 		let pos = getMousePos(canvas,event);
@@ -59,3 +67,4 @@ let canvas = document.getElementById("canvas");
 		y0 = pos.y;
 
 	});
+	/**/

@@ -286,37 +286,48 @@ var Collision = (() => {
 	function rasterizeLine(x0, y0, x1, y1, callback) {
 		let dx = x1 - x0;
 		let dy = y1 - y0;
-		
 		let sx = Math.sign(dx);
 		let sy = Math.sign(dy);
 		
+		//baldoza inicial
+		let i = Math.floor(x0);
+		let j = Math.floor(y0);
+		callback(i, j);//se cubre la baldoza actual
+			
+		//baldoza final en y
+		let j1 = sy>0? Math2.floor(y1):Math.floor(y1);
+		let i1 = sx>0? Math2.floor(x1):Math.floor(x1);
+		
+		if(i==i1 || sx==0){
+			while(j != j1){
+				callback(i,j+=sy);
+			}
+		}
+		
 		let m = dx / Math.abs(dy); //= 5.375
 
+		//lo que falta avanzar para la proxima baldoza en y
 		let yb = sy > 0 ? (Math2.ceil(y0) - y0) : (y0-Math.floor(y0));
+		//lo que se avanza en x al avanzar yb en y
 		let xb = x0 + yb * m; // 3.4+0.9*5.375 // 8.2375
-
-		let i = Math.floor(x0)
-		let j = Math.floor(y0);
-
-		let j1 = Math.floor(y1);
-		let i1 = Math.floor(xb);
+		//baldoza final en x antes de llegar a la proxima baldoza en y
+		let ib = Math.floor(xb);
+		
 		while (j != j1) {
 			//de (3.4, 2.1) a (8.23, 3) avanzamos de x=3 a x=8 y recien despues de eso de y=2 a y=3
 
-			callback(i, j);
-			i1 = Math.floor(xb);
-			while (i != i1) {
+			ib = Math.floor(xb);
+			while (i != ib) {//se cubren todas las baldozas en x antes de la proxima en y
 				callback(i+=sx, j);
 			}
-			j+=sy;
+			callback(i, j+=sy);
 			//de (8.23, 3) a (13.605, 4)
-			xb = xb + m;
+			xb = xb + m;//xb crece el equivalente a 1 en y en x
 		}
-		i1 = Math.floor(x1);
-		callback(i, j);
 		while (i != i1) {
 			callback(i+=sx, j);
 		}
+
 
 	}
 	
@@ -329,42 +340,98 @@ var Collision = (() => {
 				callback(i,j);
 	}
 	
+	
+	
 	function rasterizeBoxMoving(x0, y0, w, h, x1, y1, callback){
-		let dx = x1 - x0;
-		let dy = y1 - y0;
-
-		let m = dx / dy; //= 5.375
-
-		let xb = x0 + (Math2.ceil(y0) - y0) * m; // 3.4+0.9*5.375 // 8.2375
-
-		let i = Math.floor(x0)
-		let j = Math.floor(y0);
-
-		let j1 = Math.floor(y1);
-		let i1 = Math.floor(xb);
-
-		rasterizeBox(i,j,w,h,callback);
+		rasterizeBox(x0,y0,w,h,callback);//se cubre la baldoza actual
 		
-		while (j < j1) {
+		let dx = x1 - x0;//distancia x
+		let dy = y1 - y0;//distancia y
+		let sx = Math.sign(dx)||-1;//signo distancia x
+		let sy = Math.sign(dy)||-1;//signo distancia y
+		
+		const currentTilePos = Math2.floor;
+		const currentTileNeg = Math.floor;
+		let tilex = sx<0?currentTileNeg:currentTilePos;
+		let tiley = sy<0?currentTileNeg:currentTilePos;
+		let rtilex = sx>=0?currentTileNeg:currentTilePos;
+		let rtiley = sy>=0?currentTileNeg:currentTilePos;
+		
+		
+		x0 += +(sx > 0)*w;//if moving right x is x+w
+		x1 += +(sx > 0)*w;//if moving right x1 is x1+w
+		y0 += +(sy > 0)*h;//if moving down y is y+h
+		y1 += +(sy > 0)*h;//if moving down y1 is y1+h
+		
+		w *= -sx||-1;
+		h *= -sy||-1;
+		
+		//baldoza inicial
+		let i0 = tilex(x0);
+		let j0 = tiley(y0);
+		
+		let i = i0;
+		let j = j0;
+		
+			
+		//baldoza final en y
+		let i1 = tilex(x1);
+		let j1 = tiley(y1);
+		
+		 
+		let m = dx / Math.abs(dy); //= 5.375
+		let n = dy / Math.abs(dx); //= 5.375
+
+		//lo que falta avanzar para la proxima baldoza en y
+		let ty = tiley(y0);
+		let yb = sy > 0 ? (ty+1  - y0) : (y0 - ty);
+		//la posicion en x al avanzar yb en y
+		let xb = x0 + yb * m; // 3.4+0.9*5.375 // 8.2375
+		//la baldoza en x al avanzar yb en y
+		let ib = tilex(xb);
+		
+		let y_;//offset en y dentro de la baldoza actual;
+		let x_;
+		
+		while (j != j1) {
 			//de (3.4, 2.1) a (8.23, 3) avanzamos de x=3 a x=8 y recien despues de eso de y=2 a y=3
 
-			callback(i, j);
-			
-			i1 = Math.floor(xb);
-			while (i < i1) {
-				callback(++i, j);
+			ib = Math.floor(xb);
+			//se cubren todas las baldozas en x antes de la proxima en y
+			while (i != ib) {
+				i += sx;
+				y_ = y0 + Math.abs(i-x0)*n;
+				let j_h = rtiley(y_ + h);
+				callback(i, j);
+				for(let j_ = j; j_ != j_h;){
+					j_-=sy;
+					callback(i, j_);
+				}
 			}
-			++j;
+			j+=sy;
+			x_ = x0 + Math.abs(j-y0)*m;
+			let i_w = rtilex(x_ + w);
+			callback(i, j);
+			for(let i_ = i; i_ != i_w;){
+				i_-=sx;
+				callback(i_, j);
+			}
 			//de (8.23, 3) a (13.605, 4)
-			xb = xb + m;
+			xb = xb + m;//xb crece el equivalente a 1 en y en x
 		}
-		i1 = Math.floor(x1);
-		callback(i, j);
-		while (i < i1) {
-			callback(++i, j);
+		while (i != i1) {
+			i+=sx;
+			y_ = y0 + Math.abs(i-x0)*n;
+			let j_h = rtiley(y_ + h);
+			callback(i, j);
+			for(let j_ = j; j_ != j_h;){
+				j_-=sy;
+				callback(i, j_);
+			}
 		}
 
 	}
+	
 	
 	
 	mod.boxPoint = boxPoint;
