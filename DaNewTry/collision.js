@@ -396,36 +396,39 @@ var Collision = (() => {
 		while (j != j1) {
 			//de (3.4, 2.1) a (8.23, 3) avanzamos de x=3 a x=8 y recien despues de eso de y=2 a y=3
 
-			ib = Math.floor(xb);
+			ib = tilex(xb);//baldoza en la que terminar en x
 			//se cubren todas las baldozas en x antes de la proxima en y
-			while (i != ib) {
-				i += sx;
-				y_ = y0 + Math.abs(i-x0)*n;
-				let j_h = rtiley(y_ + h);
+			while (i != ib) {//mientras i sea diferente a la baldoza final en x
+				i += sx;//crecer baldoza
+				y_ = y0 + Math.abs(i - x0)*n;//crecer y proporcionalmente
+				let j_h = rtiley(y_ + h);//get baldoza rear en y
 				callback(i, j);
+				let sy_ = Math.sign(j_h-j);
 				for(let j_ = j; j_ != j_h;){
-					j_-=sy;
+					j_ += sy;
 					callback(i, j_);
 				}
 			}
 			j+=sy;
-			x_ = x0 + Math.abs(j-y0)*m;
+			x_ = x0 + Math.abs(j - y0)*m;
 			let i_w = rtilex(x_ + w);
 			callback(i, j);
+			let sx_ = Math.sign(i_w-i);
 			for(let i_ = i; i_ != i_w;){
-				i_-=sx;
+				i_ += sx;
 				callback(i_, j);
 			}
 			//de (8.23, 3) a (13.605, 4)
 			xb = xb + m;//xb crece el equivalente a 1 en y en x
 		}
 		while (i != i1) {
-			i+=sx;
-			y_ = y0 + Math.abs(i-x0)*n;
+			i += sx;
+			y_ = y0 + Math.abs(i - x0)*n;
 			let j_h = rtiley(y_ + h);
 			callback(i, j);
+			let sy_ = Math.sign(j_h-j);
 			for(let j_ = j; j_ != j_h;){
-				j_-=sy;
+				j_ += sy;
 				callback(i, j_);
 			}
 		}

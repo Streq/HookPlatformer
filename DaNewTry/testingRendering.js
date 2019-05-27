@@ -32,16 +32,24 @@ let canvas = document.getElementById("canvas");
 	function rasterize(a,b,c,d){
 		ctx.beginPath();       // Start a new path
 		let id = 0;
+		ctx.strokeStyle="yellow";
+		drawFun(a,b,c,d);
+		ctx.closePath();
+		ctx.stroke();
+		
 		rasterizeFun(a,b,c,d,(i,j)=>{
+			ctx.beginPath();       // Start a new path
+		
 			ctx.rect(i*gs,j*gs,gs,gs);
 			ctx.text
 			drawText(i*gs,j*gs,++id);
-		});
-		ctx.strokeStyle="red";
-		ctx.stroke();
-		ctx.closePath();
+			
+			ctx.strokeStyle="#f00";
+			ctx.stroke();
+			ctx.closePath();
 		
-		drawFun(a,b,c,d);
+		});
+		
 		
 	}
 	let a = Math.random();

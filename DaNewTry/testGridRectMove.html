@@ -20,7 +20,7 @@
 			let w1 = w*gs;
 			let h1 = h*gs;
 			
-			ctx.strokeStyle="yellow";
+			ctx.strokeStyle="#ff0";
 		
 			ctx.beginPath();
 			ctx.rect(a,b,w1,h1);
@@ -39,6 +39,19 @@
 			ctx.lineTo(c+w1,d+h1);
 			ctx.stroke();
 			ctx.closePath();
+			
+			
+			ctx.beginPath();
+			
+			ctx.strokeStyle="#0f0";
+			ctx.moveTo(a + (a<c)*w1, b + (b<d)*h1);
+			ctx.lineTo(c + (a<c)*w1, d + (b<d)*h1);
+			
+			ctx.stroke();
+			ctx.closePath();
+			
+			
+			
 		}
 		
 		rasterizeFun = (x0,y0,x1,y1,callback)=>{
@@ -46,10 +59,10 @@
 		}
 		
 		e= {
-			x0: 5,
-			y0: 5,
-			x1: -5,
-			y1: 10
+			x0: 10,
+			y0: 6,
+			x1: 10.5,
+			y1: 5.5
 		}
 		function el_error(){
 			rasterize(e.x0,e.y0,e.x1,e.y1);
