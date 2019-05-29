@@ -357,6 +357,10 @@ var Collision = (() => {
 		let rtilex = sx>=0?currentTileNeg:currentTilePos;
 		let rtiley = sy>=0?currentTileNeg:currentTilePos;
 		
+		//positive border offset
+		let pbox = Math.max(0,-sx);
+		let pboy = Math.max(0,-sy);
+		
 		
 		x0 += +(sx > 0)*w;//if moving right x is x+w
 		x1 += +(sx > 0)*w;//if moving right x1 is x1+w
@@ -400,22 +404,24 @@ var Collision = (() => {
 			//se cubren todas las baldozas en x antes de la proxima en y
 			while (i != ib) {//mientras i sea diferente a la baldoza final en x
 				i += sx;//crecer baldoza
-				y_ = y0 + Math.abs(i - x0)*n;//crecer y proporcionalmente
+				//i + (sx<0): ultimo borde superado
+				//si es retroceso es i+1, si es avance es i
+				y_ = y0 + Math.abs(i  + pbox  - x0)*n;
 				let j_h = rtiley(y_ + h);//get baldoza rear en y
 				callback(i, j);
 				let sy_ = Math.sign(j_h-j);
 				for(let j_ = j; j_ != j_h;){
-					j_ += sy;
+					j_ -= sy;
 					callback(i, j_);
 				}
 			}
 			j+=sy;
-			x_ = x0 + Math.abs(j - y0)*m;
+			x_ = x0 + Math.abs(j + pboy - y0)*m;
 			let i_w = rtilex(x_ + w);
 			callback(i, j);
 			let sx_ = Math.sign(i_w-i);
 			for(let i_ = i; i_ != i_w;){
-				i_ += sx;
+				i_ -= sx;
 				callback(i_, j);
 			}
 			//de (8.23, 3) a (13.605, 4)
@@ -423,12 +429,12 @@ var Collision = (() => {
 		}
 		while (i != i1) {
 			i += sx;
-			y_ = y0 + Math.abs(i - x0)*n;
+			y_ = y0 + Math.abs(i + pbox - x0)*n;
 			let j_h = rtiley(y_ + h);
 			callback(i, j);
 			let sy_ = Math.sign(j_h-j);
 			for(let j_ = j; j_ != j_h;){
-				j_ += sy;
+				j_ -= sy;
 				callback(i, j_);
 			}
 		}
