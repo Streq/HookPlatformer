@@ -2,75 +2,91 @@
 
 <head>
 	<script src="collision.js"></script>
-    <script src="game.js"></script>
-    <script src="setup.js"></script>
+	<script src="game.js"></script>
+	<script src="setup.js"></script>
 </head>
 
 <body>
 	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
-	
-    <script src="testingRendering.js"></script>
+
+	<script src="testingRendering.js"></script>
 	<script>
-		let w = 1, h = 1;
-		drawFun = function(a,b,c,d){
-			a*=gs;
-			b*=gs;
-			c*=gs;
-			d*=gs;
-			let w1 = w*gs;
-			let h1 = h*gs;
-			
-			ctx.strokeStyle="#ff0";
-		
+		document.addEventListener("mousemove", (event) => {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			let pos = getMousePos(canvas, event);
+			let x = pos.x;
+			let y = pos.y;
+			rasterize(x0 / gs, y0 / gs, x / gs, y / gs);
+		});
+
+		document.addEventListener("click", (event) => {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			let pos = getMousePos(canvas, event);
+			x0 = pos.x;
+			y0 = pos.y;
+
+		});
+		let w = 1,
+			h = 1;
+		drawFun = function(a, b, c, d) {
+			a *= gs;
+			b *= gs;
+			c *= gs;
+			d *= gs;
+			let w1 = w * gs;
+			let h1 = h * gs;
+
+			ctx.strokeStyle = "#ff0";
+
 			ctx.beginPath();
-			ctx.rect(a,b,w1,h1);
-			ctx.rect(c,d,w1,h1);
-			
-			ctx.moveTo(a,b);
-			ctx.lineTo(c,d);
-			
-			ctx.moveTo(a+w1,b);
-			ctx.lineTo(c+w1,d);
-			
-			ctx.moveTo(a,b+h1);
-			ctx.lineTo(c,d+h1);
-			
-			ctx.moveTo(a+w1,b+h1);
-			ctx.lineTo(c+w1,d+h1);
+			ctx.rect(a, b, w1, h1);
+			ctx.rect(c, d, w1, h1);
+
+			ctx.moveTo(a, b);
+			ctx.lineTo(c, d);
+
+			ctx.moveTo(a + w1, b);
+			ctx.lineTo(c + w1, d);
+
+			ctx.moveTo(a, b + h1);
+			ctx.lineTo(c, d + h1);
+
+			ctx.moveTo(a + w1, b + h1);
+			ctx.lineTo(c + w1, d + h1);
 			ctx.stroke();
 			ctx.closePath();
-			
-			
+
+
 			ctx.beginPath();
-			
-			ctx.strokeStyle="#0f0";
-			ctx.moveTo(a + (a<c)*w1, b + (b<d)*h1);
-			ctx.lineTo(c + (a<c)*w1, d + (b<d)*h1);
-			
+
+			ctx.strokeStyle = "#0f0";
+			ctx.moveTo(a + (a < c) * w1, b + (b < d) * h1);
+			ctx.lineTo(c + (a < c) * w1, d + (b < d) * h1);
+
 			ctx.stroke();
 			ctx.closePath();
-			
-			
-			
+
+
+
 		}
-		
-		rasterizeFun = (x0,y0,x1,y1,callback)=>{
-			Collision.rasterizeBoxMoving(x0,y0,w,h,x1,y1,callback);
+
+		rasterizeFun = (x0, y0, x1, y1, callback) => {
+			Collision.rasterizeBoxMoving(x0, y0, w, h, x1, y1, callback);
 		}
-		
-		e= {
+
+		e = {
 			x0: 10,
 			y0: 6,
 			x1: 10.5,
 			y1: 5.5
 		}
-		function el_error(){
-			rasterize(e.x0,e.y0,e.x1,e.y1);
+
+		function el_error() {
+			rasterize(e.x0, e.y0, e.x1, e.y1);
 		}
-		
+
 		el_error();
 	</script>
 </body>
 
 </html>
-

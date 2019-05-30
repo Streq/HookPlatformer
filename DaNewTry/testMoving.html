@@ -1,0 +1,111 @@
+<html>
+
+<head>
+	<script src="collision.js"></script>
+    <script src="game.js"></script>
+    <script src="setup.js"></script>
+</head>
+
+<body>
+	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
+	
+    <script src="testingRendering.js"></script>
+	<script>
+		let x = 0, 
+			y = 0, 
+			w = 0.5, 
+			h = 0.5,
+			cx = 0,
+			cy = 0,
+			blocks = [[10,10],[10,11],[15,10],[16,10],[20,20]];
+			collisions = [];
+		
+		document.addEventListener("click", (event) => {
+			collisions = [];
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			let pos = getMousePos(canvas, event);
+			x1 = pos.x / gs;
+			y1 = pos.y / gs;
+			rasterize(x, y, x1, y1);
+			x=x1;
+			y=y1;
+		});
+		
+		function drawRects(){
+			ctx.strokeStyle="#00f";
+			ctx.beginPath();
+			blocks.forEach((a) => ctx.rect(a[0]*gs,a[1]*gs,1*gs,1*gs));
+			ctx.stroke();
+			ctx.closePath();
+			
+		}
+		drawFun = function(a,b,c,d){
+			a*=gs;
+			b*=gs;
+			c*=gs;
+			d*=gs;
+			let w1 = w*gs;
+			let h1 = h*gs;
+			
+			ctx.strokeStyle="#ff0";
+		
+			ctx.beginPath();
+			ctx.rect(a,b,w1,h1);
+			ctx.rect(c,d,w1,h1);
+			
+			ctx.moveTo(a,b);
+			ctx.lineTo(c,d);
+			
+			ctx.moveTo(a+w1,b);
+			ctx.lineTo(c+w1,d);
+			
+			ctx.moveTo(a,b+h1);
+			ctx.lineTo(c,d+h1);
+			
+			ctx.moveTo(a+w1,b+h1);
+			ctx.lineTo(c+w1,d+h1);
+			ctx.stroke();
+			ctx.closePath();
+			
+			
+			ctx.beginPath();
+			
+			ctx.strokeStyle="#0f0";
+			ctx.moveTo(a + (a<c)*w1, b + (b<d)*h1);
+			ctx.lineTo(c + (a<c)*w1, d + (b<d)*h1);
+			
+			ctx.stroke();
+			ctx.closePath();
+			
+			
+			
+		}
+		
+		rasterizeFun = (x0,y0,x1,y1,callback)=>{
+			let xy = Collision.rasterizeBoxMoving(x0,y0,w,h,x1,y1,callback);
+			drawRects();
+			return xy;
+		}
+		
+		callback = function (i, j){
+			let col = "#f00"
+			if(blocks.find((a)=>{return a[0]==i && a[1]==j;})){
+				col = "#0f0"
+				collisions.push([i,j]);
+			};
+			ctx.beginPath(); // Start a new path
+
+			ctx.rect(i * gs, j * gs, gs, gs);
+			drawText(i * gs, j * gs, ++id);
+
+			ctx.strokeStyle = col;
+			ctx.stroke();
+			ctx.closePath();
+
+		}
+		
+	</script>
+</body>
+
+</html>
+
