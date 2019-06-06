@@ -408,20 +408,20 @@ var Collision = (() => {
 				//si es retroceso es i+1, si es avance es i
 				y_ = y0 + Math.abs(i  + pbox  - x0)*n;
 				let j_h = rtiley(y_ + h);//get baldoza rear en y
-				callback(i, j);
+				callback(i, j_h, 0, sy, i, y_);
 				let sy_ = Math.sign(j_h-j);
-				for(let j_ = j; j_ != j_h;){
-					j_ -= sy;
-					callback(i, j_);
+				for(let j_ = j_h; j_ != j;){
+					j_ += sy;
+					callback(i, j_, 0, sy, i, y_);
 				}
 			}
 			j+=sy;
 			x_ = x0 + Math.abs(j + pboy - y0)*m;
 			let i_w = rtilex(x_ + w);
-			callback(i, j);
+			callback(i_w, j);
 			let sx_ = Math.sign(i_w-i);
-			for(let i_ = i; i_ != i_w;){
-				i_ -= sx;
+			for(let i_ = i_w; i_ != i;){
+				i_ += sx;
 				callback(i_, j);
 			}
 			//de (8.23, 3) a (13.605, 4)
@@ -431,16 +431,44 @@ var Collision = (() => {
 			i += sx;
 			y_ = y0 + Math.abs(i + pbox - x0)*n;
 			let j_h = rtiley(y_ + h);
-			callback(i, j);
+			callback(i, j_h,0,sy,i,y_);
 			let sy_ = Math.sign(j_h-j);
-			for(let j_ = j; j_ != j_h;){
-				j_ -= sy;
+			for(let j_ = j_h; j_ != j;){
+				j_ += sy;
 				callback(i, j_);
 			}
 		}
 
 	}
 	
+	
+	function rasterizeRange(x0,x1,y0,y1,callback){
+		let dx = Math.sign(x1-x0),
+			dy = Math.sign(y1-y0);
+ 			i0,j0,i1,j1;
+		if(dx<0){
+			i0 = Math2.floor(x0);
+			i1 = Math.floor(x1);
+		}else{
+			i0 = Math.floor(x0);
+			i1 = Math2.floor(x1);
+		}
+		if(dy<0){
+			j0 = Math2.floor(y0);
+			j1 = Math.floor(y1);
+		}else{
+			j0 = Math.floor(y0);
+			j1 = Math2.floor(y1);
+		}
+		
+		for(let i = i0; i != i1; i+=dx){
+			for(let j = j0; j != j1; j+=dy){
+				callback(i,j);
+			}
+		}
+		
+		
+	}
 	
 	
 	mod.boxPoint = boxPoint;

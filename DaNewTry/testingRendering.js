@@ -21,6 +21,48 @@ function drawLine(a, b, c, d) {
 
 }
 
+function drawMovingBlock(a, b, c, d) {
+	a *= gs;
+	b *= gs;
+	c *= gs;
+	d *= gs;
+	let w1 = w * gs;
+	let h1 = h * gs;
+
+	ctx.strokeStyle = "#ff0";
+
+	ctx.beginPath();
+	ctx.rect(a, b, w1, h1);
+	ctx.rect(c, d, w1, h1);
+
+	ctx.moveTo(a, b);
+	ctx.lineTo(c, d);
+
+	ctx.moveTo(a + w1, b);
+	ctx.lineTo(c + w1, d);
+
+	ctx.moveTo(a, b + h1);
+	ctx.lineTo(c, d + h1);
+
+	ctx.moveTo(a + w1, b + h1);
+	ctx.lineTo(c + w1, d + h1);
+	ctx.stroke();
+	ctx.closePath();
+
+
+	ctx.beginPath();
+
+	ctx.strokeStyle = "#0f0";
+	ctx.moveTo(a + (a < c) * w1, b + (b < d) * h1);
+	ctx.lineTo(c + (a < c) * w1, d + (b < d) * h1);
+
+	ctx.stroke();
+	ctx.closePath();
+
+
+
+}
+
 function drawText(x, y, text) {
 	ctx.font = '12px serif';
 	ctx.fillStyle = "white";
@@ -30,17 +72,19 @@ function drawText(x, y, text) {
 let rasterizeFun = Collision.rasterizeLine;
 let drawFun = drawLine;
 
-function callback(i, j){
+function drawTile(i, j, id_){
 	ctx.beginPath(); // Start a new path
 
 	ctx.rect(i * gs, j * gs, gs, gs);
-	drawText(i * gs, j * gs, ++id);
+	drawText(i * gs, j * gs, id_||++id);
 
 	ctx.strokeStyle = "#f00";
 	ctx.stroke();
 	ctx.closePath();
 
 }
+
+let callback = drawTile;
 var id = 0;
 	
 function rasterize(a, b, c, d) {
@@ -55,14 +99,8 @@ function rasterize(a, b, c, d) {
 
 
 }
-let a = Math.random();
-let b = Math.random();
-let c = Math.random() * 10;
-let d = Math.random() * 10;
 //rasterize(a,b,a+c,b+d);
 
-let x0 = 0,
-	y0 = 0;
 /**/
 
 /**/

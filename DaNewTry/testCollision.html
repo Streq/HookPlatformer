@@ -1,0 +1,157 @@
+<html>
+
+<head>
+	<script src="collision.js"></script>
+	<script src="game.js"></script>
+	<script src="setup.js"></script>
+</head>
+
+<body>
+	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
+
+	<script src="testingRendering.js"></script>
+	<script>
+		let x0 = 0,
+			y0 = 0,
+			x1 = 10,
+			y1 = 10,
+			w = 0.75,
+			h = 0.75,
+			cx = 0,
+			cy = 0,
+			blocks = [
+				[2, 9],
+				[2, 11],
+
+				[14, 10],
+				[15, 10],
+				[16, 10],
+				[17, 10],
+				[18, 10],
+				[19, 10],
+				[20, 10],
+				[17, 7],
+				[17, 8],
+				[17, 9],
+				[17, 11],
+				[17, 12],
+				[17, 13],
+
+				[4, 10],
+				[5, 10],
+				[6, 10],
+				[8, 10],
+				[9, 10],
+				[10, 10],
+				[7, 7],
+				[7, 8],
+				[7, 9],
+				[7, 11],
+				[7, 12],
+				[7, 13],
+			],
+			collisions = [],
+			touched = [],
+			mousedown = false;
+
+
+		function render() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			blocks.forEach((e) => {
+				ctx.fillStyle = "blue";
+				ctx.fillRect(e[0] * gs, e[1] * gs, gs, gs);
+			});
+			touched.forEach((e) => {
+				ctx.fillStyle = "red";
+				ctx.fillRect(e[0] * gs, e[1] * gs, gs, gs);
+			})
+			let i = 0;
+			collisions.forEach((e) => {
+				drawTile(e[0], e[1], ++i);
+			});
+
+			drawMovingBlock(x0, y0, x1, y1);
+		}
+
+		function step(x_, y_) {
+			let collisions_ = [];
+			let touched_ = [];
+
+			let dx = x_ - x1;
+			let dy = y_ - y1;
+			let m = dy / Math.abs(dx);
+			let n = dx / Math.abs(dy);
+
+			Collision.rasterizeBoxMoving(x1, y1, w, h, x_, y_, (i, j) => {
+				collisions_.push([i, j]);
+			});
+
+			for (let i = 0; i < collisions_.length; ++i) {
+				let col = collisions_[i];
+				let found = blocks.find((block) => {
+					return block[0] == col[0] && block[1] == col[1];
+				});
+				if (found) {
+					touched_.push(found);
+					break;
+				};
+			}
+			collisions = collisions_;
+			touched = touched_;
+
+			x0 = x1;
+			y0 = y1;
+
+
+			let touch = touched[0];
+			if (touch) {
+				let i = touch[0];
+				let j = touch[1];
+				let side = Collision.boxBoxSideOfCollision(x0, y0, h, w, i, j, 1, 1, x_ - x0, y_ - y0);
+				if (side.x) {
+					if (side.x > 0) {
+						x_ = i - w;
+					} else {
+						x_ = i + 1;
+					}
+					y_ = y1 + m * (x_ - x1)
+				}
+				if (side.y) {
+					if (side.y > 0) {
+						y_ = j - h;
+					} else {
+						y_ = j + 1;
+					}
+					x_ = x1 + n * (y_ - y1)
+
+				}
+			}
+			x1 = x_;
+			y1 = y_;
+		}
+
+
+		render();
+
+
+		const dothething = (e) => {
+			let pos = getMousePos(canvas, e);
+
+			step(pos.x / gs, pos.y / gs);
+			render();
+		};
+		document.body.addEventListener("mousemove", dothething);
+		var movermouse = true;
+		document.body.addEventListener("keypress", () => {
+			if (movermouse=!movermouse) {
+				document.body.removeEventListener("mousemove", dothething);
+				document.body.addEventListener("click", dothething);
+			} else {
+				document.body.removeEventListener("click", dothething);
+				document.body.addEventListener("mousemove", dothething);
+			}
+		});
+	</script>
+</body>
+
+</html>

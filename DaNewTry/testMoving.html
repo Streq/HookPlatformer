@@ -17,10 +17,20 @@
 			h = 0.5,
 			cx = 0,
 			cy = 0,
-			blocks = [[10,10],[10,11],[15,10],[16,10],[20,20]];
+			blocks = [[2,9],[2,11],
+					  [14,10],[15,10],[16,10],[17,10],[18,10],[19,10],[20,10],
+					  [17,7 ],[17,8 ],[17,9 ],[17,11],[17,12],[17,13],
+					  
+					  [4,10],[5,10],[6,10],[8,10],[9,10],[10,10],
+					  [7,7 ],[7,8 ],[7,9 ],[7,11],[7,12],[7,13],
+					  
+					  
+					 ];
 			collisions = [];
 		
-		document.addEventListener("click", (event) => {
+		let mousedown = false;
+		document.addEventListener("mouseup", (event) => {
+			mousedown = false;
 			collisions = [];
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			let pos = getMousePos(canvas, event);
@@ -30,6 +40,24 @@
 			x=x1;
 			y=y1;
 		});
+		
+		document.addEventListener("mousedown", (event) => {
+			mousedown=true;
+		});
+		
+		
+		document.addEventListener("mousemove", (event) => {
+			if(mousedown){
+				collisions = [];
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				let pos = getMousePos(canvas, event);
+				x1 = pos.x / gs;
+				y1 = pos.y / gs;
+				rasterize(x, y, x1, y1);
+				
+			}
+		});
+		
 		
 		function drawRects(){
 			ctx.strokeStyle="#00f";
@@ -90,7 +118,9 @@
 		callback = function (i, j){
 			let col = "#f00"
 			if(blocks.find((a)=>{return a[0]==i && a[1]==j;})){
-				col = "#0f0"
+				col = "#0f0";
+				ctx.fillStyle = col;
+				ctx.fillRect(i*gs,j*gs,gs,gs);
 				collisions.push([i,j]);
 			};
 			ctx.beginPath(); // Start a new path
