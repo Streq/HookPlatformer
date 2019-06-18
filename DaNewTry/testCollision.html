@@ -50,9 +50,12 @@
 				[7, 12],
 				[7, 13],
 			],
+			grid = new DoubleArrayGrid(),
 			collisions = [],
 			touched = [],
 			mousedown = false;
+		
+		blocks.forEach((e)=>{grid.set(e[0],e[1],1)});
 
 
 		function render() {
@@ -71,16 +74,23 @@
 			});
 
 			drawMovingBlock(x0, y0, x1, y1);
+			touched = [];
+			collisions = []
 		}
-
+		
+		function check(x,y){
+			let g = grid.get(x,y);
+			return g && [x,y];
+		}
+		
 		function step(x_, y_) {
 			let collisions_ = [];
 			let touched_ = [];
 
 			let dx = x_ - x1;
 			let dy = y_ - y1;
-			let m = dy / Math.abs(dx);
-			let n = dx / Math.abs(dy);
+			let m = dy / dx;
+			let n = dx / dy;
 
 			Collision.rasterizeBoxMoving(x1, y1, w, h, x_, y_, (i, j) => {
 				collisions_.push([i, j]);
@@ -88,22 +98,19 @@
 
 			for (let i = 0; i < collisions_.length; ++i) {
 				let col = collisions_[i];
-				let found = blocks.find((block) => {
-					return block[0] == col[0] && block[1] == col[1];
-				});
+				let found = check(col[0], col[1]);
 				if (found) {
 					touched_.push(found);
+					//Collision.boxBoxSideOfCollision
 					break;
 				};
 			}
-			collisions = collisions_;
-			touched = touched_;
-
+			
 			x0 = x1;
 			y0 = y1;
 
 
-			let touch = touched[0];
+			let touch = touched_[0];
 			if (touch) {
 				let i = touch[0];
 				let j = touch[1];
@@ -114,7 +121,11 @@
 					} else {
 						x_ = i + 1;
 					}
-					y_ = y1 + m * (x_ - x1)
+					y1 = y1 + m * (x_ - x1);
+					x1 = x_;
+					if(dy){
+						step(x1,y_);
+					}
 				}
 				if (side.y) {
 					if (side.y > 0) {
@@ -122,13 +133,23 @@
 					} else {
 						y_ = j + 1;
 					}
-					x_ = x1 + n * (y_ - y1)
+					x1 = x1 + n * (y_ - y1);
+					y1 = y_;
+					if(dx){
+						step(x_,y1);
+					}
+					
 
 				}
+			}else{
+				x1 = x_;
+				y1 = y_;
 			}
-			x1 = x_;
-			y1 = y_;
+			
+			collisions = collisions_.concat(collisions);
+			touched = touched_.concat(touched)
 		}
+		
 
 
 		render();
