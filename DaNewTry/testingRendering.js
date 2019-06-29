@@ -3,13 +3,7 @@ let ctx = canvas.getContext("2d");
 ctx.imageSmoothingEnabled = false;
 let gs = 32;
 
-function getMousePos(canvas, evt) {
-	var rect = canvas.getBoundingClientRect();
-	return {
-		x: evt.clientX - rect.left,
-		y: evt.clientY - rect.top
-	};
-}
+
 
 function drawLine(a, b, c, d) {
 	ctx.strokeStyle = "yellow";

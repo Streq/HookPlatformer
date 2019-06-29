@@ -10,11 +10,12 @@
 	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
 
 	<script src="testingRendering.js"></script>
+	<script src="gridCollisionWorld.js"></script>
 	<script>
 		let x0 = 0,
 			y0 = 0,
-			x1 = 0,
-			y1 = 0,
+			x1 = 10,
+			y1 = 10,
 			w = 0.75,
 			h = 0.75,
 			cx = 0,
@@ -50,7 +51,8 @@
 				[7, 12],
 				[7, 13],
 			],
-			grid = new DoubleArrayGrid(),
+			world = new GridCollisionWorld(),
+			grid = world.grid,
 			collisions = [],
 			touched = [],
 			mousedown = false;
@@ -81,7 +83,7 @@
 
 			drawMovingBlock(x0, y0, x1, y1);
 			touched = [];
-			collisions = []
+			collisions = [];
 		}
 		
 		function check(x,y){
@@ -89,40 +91,38 @@
 			return g && [x,y];
 		}
 		
-		
-		
-
 		function step(x_, y_) {
-			x0 = x1;
-			y0 = y1;
-			let col;
-			do{
-				col = Collision.boxGridSubstep(x1, y1, w, h, x_, y_, check);
-				collisions = col.gridtiles.concat(collisions);
-				touched = col.touched.concat(touched)
-				if(col.side){
-					if(col.side.x){
-						x_=col.x;
-					}
-					if(col.side.y){
-						y_=col.y;
-					}
-				}
-				x1 = col.x;
-				y1 = col.y;
-			}while(x_!=x1 || y_!=y1);
+			let collisions_ = [];
+			let touched_ = [];
+
+			let dx = x_ - x1;
+			let dy = y_ - y1;
+			let m = dy / dx;
+			let n = dx / dy;
+
+			let obj = {x:x1,y:y1,w:w,h:h,vx:dx,vy:dy};
+			world.objects = [obj];
+			world.step(1);
 			
+			x0=x1;
+			y0=y1;
+			x1=obj.x;
+			y1=obj.y;
+			
+			collisions = collisions_.concat(collisions);
+			touched = touched_.concat(touched)
 		}
-
 		
 
-		
-		
+
 		render();
 
-		let pos;
+
 		const dothething = (e) => {
-			pos = getMousePos(canvas, e);
+			let pos = getMousePos(canvas, e);
+
+			step(pos.x / gs, pos.y / gs);
+			render();
 		};
 		document.body.addEventListener("mousemove", dothething);
 		var movermouse = true;
@@ -135,14 +135,6 @@
 				document.body.addEventListener("mousemove", dothething);
 			}
 		});
-		
-		setInterval(()=>{
-			let dx = (pos.x/gs-(w*0.5)-x1)*0.1;
-			let dy = (pos.y/gs-(h*0.5)-y1)*0.1;
-			
-			step(x1+dx, y1+dy);
-			render();
-		},1000/60);
 	</script>
 </body>
 

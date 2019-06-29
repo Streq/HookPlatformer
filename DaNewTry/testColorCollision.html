@@ -1,0 +1,170 @@
+<html>
+
+<head>
+	<script src="collision.js"></script>
+	<script src="game.js"></script>
+	<script src="setup.js"></script>
+	<script src="gridCollisionWorld.js"></script>
+	
+</head>
+
+<body>
+	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
+
+	<script>
+		//setup classes
+		let canvas = document.getElementById("canvas");
+		let ctx = canvas.getContext("2d");
+		const COLORS = [
+			"#000",
+			"#f00",
+			"#0f0",
+			"#00f",
+			"#0ff",
+			"#f0f",
+			"#ff0",
+			"#fff",
+		];
+		
+		const gs = 64;
+		
+		class Player{
+			constructor(color, x, y){
+				this.color = color;
+				this.w = 0.5;
+				this.h = 0.5;
+				
+				this.speed = 2;
+				this.jumpSpeed = 20;
+				this.gravity = 5;
+				
+				this.x = x;
+				this.y = y;
+				this.vx = 0;
+				this.vy = 0;
+				
+				
+				this.behaviour = {
+					jump:0,
+					move:0
+				}
+				
+				this.ground = false;
+			}
+			
+			update(dt){
+				this.vx = this.behaviour.move*this.speed;
+				if(this.ground){
+					this.vy -= this.behaviour.jump*this.jumpSpeed;
+				}
+				this.vy += this.gravity*dt;
+			}
+		}
+		
+		
+	</script>
+	<script>
+		//mock data
+		let grid = new SingleArrayGrid(10);
+		grid.grid= /*[
+			2,2,2,2,2,2,2,2,2,2,
+			2,3,3,3,3,3,3,3,3,2,
+			2,3,3,3,3,3,3,3,3,2,
+			2,3,3,2,2,2,2,2,2,2,
+			2,3,3,2,7,7,7,2,2,2,
+			2,3,3,2,2,2,2,2,2,2,
+			2,3,3,3,4,4,4,3,3,2,
+			2,3,3,3,4,4,4,3,3,2,
+			2,2,2,3,3,3,3,3,2,2,
+		];*/
+			[
+			2,2,2,2,2,2,2,2,2,2,
+			2,3,3,3,3,3,3,3,3,2,
+			2,3,3,3,3,3,3,3,3,2,
+			2,3,3,3,3,3,3,3,3,2,
+			2,3,3,3,3,3,3,3,3,2,
+			2,3,3,3,3,3,3,3,3,2,
+			2,3,3,3,3,3,3,3,3,2,
+			2,3,3,3,3,3,3,3,7,2,
+			2,2,2,2,3,3,2,2,2,2,
+		];
+		
+		let player = new Player(2,2,2);
+		
+		//FUNCTIONS
+		function renderGrid(grid,size){
+			grid.forEach((tile,x,y)=>{
+				ctx.fillStyle = COLORS[tile];
+				ctx.fillRect(x*size,y*size,size,size);
+			});
+		}
+		
+		function render(size){
+			ctx.clearRect(0,0,canvas.width,canvas.height);
+			renderGrid(grid,size);
+			ctx.fillStyle = COLORS[player.color];
+			ctx.fillRect(player.x * size, player.y * size, player.w * size, player.h * size);
+		}
+		
+		let world = new GridCollisionWorld();
+		let objects = [player];
+		world.grid = grid;
+		
+		function update(dt){
+			//update entity behaviour
+			player.update(dt);
+			
+			//move towards mouse
+			player.vx = (mx  - (player.x + player.w*0.5))*10;
+			player.vy = (my  - (player.y + player.h*0.5))*10;
+			
+			//update world
+			physicsStep(dt);
+			
+		}
+		
+		function physicsStep(dt){
+			
+			objects.forEach(e=>{
+				e.x += e.vx*dt;
+				e.y += e.vy*dt;
+			})
+			
+			
+			
+		}
+		
+		let mx = 0, my = 0;
+		
+		canvas.tabIndex=-1;
+		canvas.addEventListener("mousemove", (e)=>{
+			let p = getMousePos(canvas,e);
+			mx = p.x/gs;
+			my = p.y/gs;
+		});
+		canvas.addEventListener("keydown", (e)=>{
+			let ret = [];
+			Collision.rasterizeBox(player.x,player.y,player.w,player.h,(i,j)=>{
+				ret.push(grid.get(i,j));
+			});
+			if(ret.length){
+				let col = ret[0];
+				let homogeneous = ret.findIndex(e=>(e !== col)) === -1;
+				if(homogeneous){
+					player.color = col;
+				}
+			}
+		});
+		
+		console.log(Input);
+		
+		
+		
+		let loop = new Loop.RAFLoop((dt)=>update(dt*0.001),()=>render(gs));
+		loop.start();
+		
+		
+	</script>
+</body>
+
+</html>

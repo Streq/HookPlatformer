@@ -343,6 +343,7 @@ var Collision = (() => {
 	
 	
 	function rasterizeBoxMoving(x0, y0, w, h, x1, y1, callback){
+		let ret;
 		rasterizeBox(x0,y0,w,h,callback);//se cubre la baldoza actual
 		
 		let dx = x1 - x0;//distancia x
@@ -408,21 +409,25 @@ var Collision = (() => {
 				//si es retroceso es i+1, si es avance es i
 				y_ = y0 + Math.abs(i  + pbox  - x0)*n;
 				let j_h = rtiley(y_ + h);//get baldoza rear en y
-				callback(i, j_h, 0, sy, i, y_);
+				ret = callback(i, j_h, 0, sy, i, y_);
+				if(ret!=null)return ret;
 				let sy_ = Math.sign(j_h-j);
 				for(let j_ = j_h; j_ != j;){
 					j_ += sy;
-					callback(i, j_, 0, sy, i, y_);
+					ret = callback(i, j_, 0, sy, i, y_);
+					if(ret!=null)return ret;
 				}
 			}
 			j+=sy;
 			x_ = x0 + Math.abs(j + pboy - y0)*m;
 			let i_w = rtilex(x_ + w);
-			callback(i_w, j);
+			ret = callback(i_w, j);
+			if(ret!=null)return ret;
 			let sx_ = Math.sign(i_w-i);
 			for(let i_ = i_w; i_ != i;){
 				i_ += sx;
-				callback(i_, j);
+				ret=callback(i_, j);
+				if(ret!=null)return ret;
 			}
 			//de (8.23, 3) a (13.605, 4)
 			xb = xb + m;//xb crece el equivalente a 1 en y en x
@@ -431,15 +436,18 @@ var Collision = (() => {
 			i += sx;
 			y_ = y0 + Math.abs(i + pbox - x0)*n;
 			let j_h = rtiley(y_ + h);
-			callback(i, j_h,0,sy,i,y_);
+			ret = callback(i, j_h,0,sy,i,y_);
+			if(ret!=null)return ret;
 			let sy_ = Math.sign(j_h-j);
 			for(let j_ = j_h; j_ != j;){
 				j_ += sy;
-				callback(i, j_);
+				ret = callback(i, j_);
+				if(ret!=null)return ret;
 			}
 		}
 
 	}
+	
 	
 	
 	function rasterizeRange(x0,x1,y0,y1,callback){
@@ -465,11 +473,140 @@ var Collision = (() => {
 			for(let j = j0; j != j1; j+=dy){
 				callback(i,j);
 			}
+		}	
+	}
+		
+	function xParallelGridSegmentCast(ax,bx,y,callback){
+		let ret = [],
+			i0 = Math.floor(Math.min(ax,bx)),
+			i1 = Math2.floor(Math.max(ax,bx)),
+			j = Math.floor(y),
+			i = i0;
+		for(; i <= i1; ++i){
+			let r = callback(i,j);
+			if(r)ret.push(r);
 		}
-		
-		
+		return ret.length? ret:null;
 	}
 	
+	function yParallelGridSegmentCast(ay,by,x,callback){
+		let ret = [],
+			i0 = Math.floor(Math.min(ay,by)),
+			i1 = Math2.floor(Math.max(ay,by)),
+			j = Math.floor(x),
+			i = i0;
+		for(; i <= i1; ++i){
+			let r = callback(j,i);
+			if(r)ret.push(r);
+		}
+		return ret.length? ret:null;
+	}
+	
+	function xParallelGridRayCastPositive(ax,bx,y,callback){
+		let ret,
+			i0 = Math.floor(Math.min(ax,bx)),
+			i1 = Math2.floor(Math.max(ax,bx)),
+			j = Math.floor(y),
+			i = i0;
+		for(; i <= i1; ++i){
+			ret=callback(i,j);
+			if(ret!=null)return ret;
+		}
+	}
+	function yParallelGridRayCastPositive(ax,bx,y,callback){
+		let ret,
+			i0 = Math.floor(Math.min(ax,bx)),
+			i1 = Math2.floor(Math.max(ax,bx)),
+			j = Math.floor(y),
+			i = i0;
+		for(; i <= i1; ++i){
+			ret = callback(j,i);
+			if(ret!=null)return ret;
+		}
+	}
+	
+	function xParallelGridRayCastNegative(ax,bx,y,callback){
+		let ret,
+			i0 = Math.floor(Math.min(ax,bx)),
+			i1 = Math2.floor(Math.max(ax,bx)),
+			j = Math.floor(y),
+			i = i1;
+		for(; i >= i0; --i){
+			ret = callback(i,j);
+			if(ret!=null)return ret;
+		}
+	}
+	
+	function yParallelGridRayCastNegative(ax,bx,y,callback){
+		let ret,
+			i0 = Math.floor(Math.min(ax,bx)),
+			i1 = Math2.floor(Math.max(ax,bx)),
+			j = Math.floor(y),
+			i = i1;
+		for(; i >= i0; --i){
+			ret = callback(j,i);
+			if(ret!=null)return ret;
+		}
+	}
+	
+	function boxGridSubstep(x0, y0, w, h, x1, y1, filter) {
+			let collisions_ = [];
+			let touched_ = [];
+			let ret = {}
+			let dx = x1 - x0;
+			let dy = y1 - y0;
+			let x_=x1, y_=y1;
+			Collision.rasterizeBoxMoving(x0, y0, w, h, x1, y1, (i, j) => {
+				collisions_.push([i,j])
+				let found = filter(i, j);
+				if (found) {
+					touched_.push(found);
+					return true;
+				};
+				return null;
+			});
+
+			
+			let touch = touched_[0];
+			let side;
+			if (touch) {
+				let m = dy / dx;
+				let n = dx / dy;
+
+				let i = touch[0];
+				let j = touch[1];
+				side = Collision.boxBoxSideOfCollision(x0, y0, h, w, i, j, 1, 1, dx, dy);
+				if (side.x) {
+					if (side.x > 0) {
+						x_ = i - w;
+					} else {
+						x_ = i + 1;
+					}
+					y1 = y0 + m * (x_ - x0);
+					x1 = x_;
+					
+				}
+				if (side.y) {
+					if (side.y > 0) {
+						y_ = j - h;
+					} else {
+						y_ = j + 1;
+					}
+					x1 = x0 + n * (y_ - y0);
+					y1 = y_;
+				}
+			}else{
+				x1 = x_;
+				y1 = y_;
+			}
+			return{
+				x:x1,
+				y:y1,
+				side:side,
+				touched: touched_,
+				gridtiles: collisions_
+			}
+		}	
 	
 	mod.boxPoint = boxPoint;
 	mod.boxBox = boxBox;
@@ -488,6 +625,9 @@ var Collision = (() => {
 	
 	mod.rasterizeLine = rasterizeLine;
 	mod.rasterizeBoxMoving = rasterizeBoxMoving;
+	
+	mod.rasterizeBox = rasterizeBox;
+	mod.boxGridSubstep = boxGridSubstep;
 	
 	return mod;
 })();
