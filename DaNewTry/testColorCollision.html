@@ -26,11 +26,12 @@
 			"#fff",
 		];
 		
-		const gs = 64;
+		const gs = 32;
 		
 		class Player{
 			constructor(color, x, y){
 				this.color = color;
+				this.colorToBe = color;
 				this.w = 0.5;
 				this.h = 0.5;
 				
@@ -66,17 +67,18 @@
 	<script>
 		//mock data
 		let grid = new SingleArrayGrid(10);
-		grid.grid= /*[
+		grid.grid= /**/[
 			2,2,2,2,2,2,2,2,2,2,
 			2,3,3,3,3,3,3,3,3,2,
 			2,3,3,3,3,3,3,3,3,2,
 			2,3,3,2,2,2,2,2,2,2,
 			2,3,3,2,7,7,7,2,2,2,
 			2,3,3,2,2,2,2,2,2,2,
-			2,3,3,3,4,4,4,3,3,2,
-			2,3,3,3,4,4,4,3,3,2,
+			2,4,4,4,4,4,4,4,4,2,
+			2,4,4,4,4,4,4,4,3,2,
 			2,2,2,3,3,3,3,3,2,2,
-		];*/
+			2,2,2,3,3,3,3,3,2,2,
+		];/*///
 			[
 			2,2,2,2,2,2,2,2,2,2,
 			2,3,3,3,3,3,3,3,3,2,
@@ -87,7 +89,7 @@
 			2,3,3,3,3,3,3,3,3,2,
 			2,3,3,3,3,3,3,3,7,2,
 			2,2,2,2,3,3,2,2,2,2,
-		];
+		];//*/
 		
 		let player = new Player(2,2,2);
 		
@@ -98,12 +100,15 @@
 				ctx.fillRect(x*size,y*size,size,size);
 			});
 		}
-		
+		const border = 5;
 		function render(size){
 			ctx.clearRect(0,0,canvas.width,canvas.height);
 			renderGrid(grid,size);
 			ctx.fillStyle = COLORS[player.color];
 			ctx.fillRect(player.x * size, player.y * size, player.w * size, player.h * size);
+			ctx.fillStyle = COLORS[player.colorToBe];
+			ctx.fillRect(player.x * size+border, player.y * size+border, player.w * size-border*2, player.h * size-border*2);
+			
 		}
 		
 		let world = new GridCollisionWorld();
@@ -123,15 +128,46 @@
 			
 		}
 		
+		
+		
+
+		function step(e, dx, dy) {
+			let x0 = e.x,
+				y0 = e.y,
+				x1 = e.x+dx,
+				y1 = e.y+dy,
+				w = e.w,
+				h = e.h;
+			let col;
+			do{
+				col = Collision.boxGridSubstep(x0, y0, w, h, x1, y1, (i,j)=>{
+					let g = grid.get(i,j);
+					if(g===e.color || i>9 || j>9 || i<0 || j<0){
+						return [i,j];
+					}
+				});
+				if(col.side){
+					if(col.side.x){
+						x1=col.x;
+					}
+					if(col.side.y){
+						y1=col.y;
+					}
+				}
+				x0 = col.x;
+				y0 = col.y;
+			} while (x0!=x1 || y0!=y1);
+			e.x = x1;
+			e.y = y1;
+		}
+		
 		function physicsStep(dt){
-			
 			objects.forEach(e=>{
-				e.x += e.vx*dt;
-				e.y += e.vy*dt;
-			})
-			
-			
-			
+				step(e,e.vx*dt,e.vy*dt);
+				if(isOutOfColorToBe(e)){
+					e.color=e.colorToBe;
+				}
+			});
 		}
 		
 		let mx = 0, my = 0;
@@ -142,7 +178,8 @@
 			mx = p.x/gs;
 			my = p.y/gs;
 		});
-		canvas.addEventListener("keydown", (e)=>{
+		
+		function changeColorToBeFromBackground(player){
 			let ret = [];
 			Collision.rasterizeBox(player.x,player.y,player.w,player.h,(i,j)=>{
 				ret.push(grid.get(i,j));
@@ -151,9 +188,20 @@
 				let col = ret[0];
 				let homogeneous = ret.findIndex(e=>(e !== col)) === -1;
 				if(homogeneous){
-					player.color = col;
+					player.colorToBe = col;
 				}
 			}
+		}
+		
+		function isOutOfColorToBe(player){
+			let ret = true;
+			Collision.rasterizeBox(player.x,player.y,player.w,player.h,(i,j)=>{
+				if(grid.get(i,j)===player.colorToBe) ret = false;
+			});
+			return ret;
+		}
+		window.addEventListener("keydown", (e)=>{
+			changeColorToBeFromBackground(player);
 		});
 		
 		console.log(Input);
