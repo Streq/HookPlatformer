@@ -93,17 +93,17 @@
 		];
 		/**/
 			[
-			3,2,2,2,2,2,1,7,2,2,
-			1,2,1,1,1,2,1,1,1,1,
-			1,2,1,1,3,3,2,1,1,2,
-			1,2,1,1,2,2,2,2,1,1,
-			1,2,2,2,1,1,1,1,2,3,
+			3,2,2,2,2,2,2,2,2,2,
 			1,2,1,1,1,2,1,1,1,2,
-			1,2,1,1,2,3,2,1,1,2,
-			3,1,1,1,2,3,2,1,1,2,
-			2,2,2,2,2,2,2,3,2,2,
-			2,2,2,2,2,1,2,2,2,2,
-		]
+			1,2,1,1,3,2,3,1,1,2,
+			1,2,1,1,1,2,1,1,1,2,
+			1,2,2,2,2,2,2,2,2,2,
+			1,2,7,2,1,1,1,1,1,2,
+			1,2,1,1,1,2,3,2,1,2,
+			3,1,1,1,1,2,3,2,1,2,
+			2,2,2,2,2,2,1,2,3,2,
+			2,2,2,2,2,1,2,1,2,2,
+		];
 		/*
 		[
 			2,2,2,2,2,1,1,1,1,1,
@@ -143,21 +143,25 @@
 			//move towards mouse
 			let inp = Input.getFrameInput();
 			let prev = Input.previous||{};
-			let vv = (+!!inp.D-!!inp.U)*10;
+			//let vv = (+!!inp.D-!!inp.U)*10;
 			let hv = (+!!inp.R-!!inp.L)*10;
-			if(vv&&hv){
-				vv*=Math.SQRT1_2;
-				hv*=Math.SQRT1_2;
+			//if(vv&&hv){
+			//	vv*=Math.SQRT1_2;
+			//	hv*=Math.SQRT1_2;
+			//}
+			if(inp.b && !prev.b){
+				changeColorFromBackground(player);
 			}
-			if(inp.a && !prev.a)changeColorFromBackground(player);
 			let down=1;
 			if(player.color==1)down*=-1;
 			
-			if(inp.b && !prev.b && player.ground)player.vy-=5*down;
+			if(inp.a && !prev.a && player.ground){
+				player.vy-=5*down;
+			}
 			Input.previous = inp;
 			
 			player.vx += hv*dt;//(mx  - (player.x + player.w*0.5))*0.1;
-			player.vy += vv*dt + down*5*dt;//(my  - (player.y + player.h*0.5))*0.1;
+			player.vy += down*5*dt;//(my  - (player.y + player.h*0.5))*0.1;
 			player.vx*=1-dt*1;
 			player.vy*=1-dt*1;
 			
@@ -225,7 +229,7 @@
 			my = p.y/gs;
 		});
 		*/
-		Input.listen(canvas);
+		Input.listen(window);
 		
 		function changeColorToBeFromBackground(player){
 			let ret = [];
