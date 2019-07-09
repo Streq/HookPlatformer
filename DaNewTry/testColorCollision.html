@@ -2,292 +2,66 @@
 
 <head>
 	<script src="collision.js"></script>
-	<script src="game.js"></script>
+	<script src="app.js"></script>
 	<script src="setup.js"></script>
 	<script src="gridCollisionWorld.js"></script>
+	<script src="states/gameState.js"></script>
 	
 </head>
 
 <body>
-	<canvas id="canvas" width=768 height=512 style="background-color:black"></canvas>
+	<canvas id="canvas" style="background-color:black"></canvas>
 
 	<script>
 		//setup classes
 		let canvas = document.getElementById("canvas");
 		let ctx = canvas.getContext("2d");
-		const COLORS = [
-			"#000",
-			"#00f",
-			"#0f0",
-			"#0ff",
-			"#f00",
-			"#f0f",
-			"#ff0",
-			"#fff",
-		];
+		
+		
 		
 		const gs = 32;
 		
-		class Player{
-			constructor(color, x, y){
-				this.color = color;
-				this.colorToBe = color;
-				this.w = 0.5;
-				this.h = 0.5;
-				
-				this.speed = 2;
-				this.jumpSpeed = 20;
-				this.gravity = 5;
-				
-				this.x = x;
-				this.y = y;
-				this.vx = 0;
-				this.vy = 0;
-				
-				
-				this.behaviour = {
-					jump:0,
-					move:0
-				}
-				
-				this.ground = false;
-			}
-			
-			update(dt){
-				this.vx = this.behaviour.move*this.speed;
-				if(this.ground){
-					this.vy -= this.behaviour.jump*this.jumpSpeed;
-				}
-				this.vy += this.gravity*dt;
-			}
-		}
+		
 		
 		
 	</script>
 	<script>
 		//mock data
 		let grid = new SingleArrayGrid(10);
-		grid.grid= /**[
-			2,2,2,2,2,2,2,2,2,2,
-			2,3,3,3,3,3,3,3,3,2,
-			2,3,3,3,3,3,3,3,3,2,
-			2,3,3,2,2,2,2,2,2,2,
-			2,3,3,2,7,7,7,2,2,2,
-			2,3,3,2,2,2,2,2,2,2,
-			2,4,4,4,4,4,4,4,4,2,
-			2,4,4,4,4,4,4,4,3,2,
-			2,2,2,3,3,3,3,3,2,2,
-			2,2,2,3,3,3,3,3,2,2,
-		];/*
-			[
-			2,2,2,2,2,2,2,2,2,2,
-			2,3,3,3,3,3,3,3,3,2,
-			2,3,3,3,3,3,3,3,3,2,
-			2,3,3,3,3,3,3,3,3,2,
-			2,3,3,3,3,3,3,3,3,2,
-			2,3,3,3,3,3,3,3,3,2,
-			2,3,3,3,3,3,3,3,3,2,
-			2,3,3,3,3,3,3,3,7,2,
-			2,2,2,2,3,3,2,2,2,2,
-			2,2,2,2,3,3,2,2,2,2,
-		];
-		/**/
-			[
-			3,2,2,2,2,2,2,2,2,2,
-			1,2,1,1,1,2,1,1,1,2,
-			1,2,1,1,3,2,3,1,1,2,
-			1,2,1,1,1,2,1,1,1,2,
-			1,2,2,2,2,2,2,2,2,2,
-			1,2,7,2,1,1,1,1,1,2,
-			1,2,1,1,1,2,3,2,1,2,
-			3,1,1,1,1,2,3,2,1,2,
-			2,2,2,2,2,2,1,2,3,2,
-			2,2,2,2,2,1,2,1,2,2,
-		];
-		/*
-		[
-			2,2,2,2,2,1,1,1,1,1,
-			2,1,1,1,1,2,2,2,7,1,
-			2,1,1,1,3,3,2,2,2,1,
-			2,1,1,1,1,2,2,2,2,1,
-			2,2,2,2,2,1,1,1,1,1,
-		];//*/
 		
-		
-		
-		let player = new Player(2,2,2);
-		
-		//FUNCTIONS
-		function renderGrid(grid,size){
-			grid.forEach((tile,x,y)=>{
-				ctx.fillStyle = COLORS[tile];
-				ctx.fillRect(x*size,y*size,size,size);
-			});
+		let levelData = {
+			spawnPoint: {x:2, y:2},
+			grid: [
+				1,2,2,2,2,2,2,2,2,5,
+				1,2,1,1,3,4,4,4,4,4,
+				1,2,1,1,1,2,1,2,1,2,
+				1,2,2,2,2,2,2,2,2,2,
+				1,2,7,2,1,1,1,1,1,2,
+				1,1,1,1,1,2,3,2,1,2,
+				1,2,4,4,4,2,3,2,1,2,
+				6,1,4,1,1,2,3,2,1,2,
+				4,6,1,2,2,2,2,2,3,2,
+				2,4,2,2,6,3,1,1,2,4,
+			],
+			width: 10,
+			initCol: 2
 		}
-		const border = 5;
-		function render(size){
-			ctx.clearRect(0,0,canvas.width,canvas.height);
-			renderGrid(grid,size);
-			ctx.fillStyle = COLORS[player.color];
-			ctx.fillRect(player.x * size, player.y * size, player.w * size, player.h * size);
-		}
-		
-		let world = new GridCollisionWorld();
-		let objects = [player];
-		world.grid = grid;
-		
-		function update(dt){
-			//update entity behaviour
-			//player.update(dt);
-			
-			//move towards mouse
-			let inp = Input.getFrameInput();
-			let prev = Input.previous||{};
-			//let vv = (+!!inp.D-!!inp.U)*10;
-			let hv = (+!!inp.R-!!inp.L)*10;
-			//if(vv&&hv){
-			//	vv*=Math.SQRT1_2;
-			//	hv*=Math.SQRT1_2;
-			//}
-			if(inp.b && !prev.b){
-				changeColorFromBackground(player);
-			}
-			let down=1;
-			if(player.color==1)down*=-1;
-			
-			if(inp.a && !prev.a && player.ground){
-				player.vy-=5*down;
-			}
-			Input.previous = inp;
-			
-			player.vx += hv*dt;//(mx  - (player.x + player.w*0.5))*0.1;
-			player.vy += down*5*dt;//(my  - (player.y + player.h*0.5))*0.1;
-			player.vx*=1-dt*1;
-			player.vy*=1-dt*1;
-			
-			//update world
-			physicsStep(dt);
-			
-		}
+		canvas.width=gs*levelData.width;
+		canvas.height=gs*levelData.width;
 		
 		
 		
-
-		function step(e, dx, dy) {
-			let x0 = e.x,
-				y0 = e.y,
-				x1 = e.x+dx,
-				y1 = e.y+dy,
-				w = e.w,
-				h = e.h;
-			let col;
-			do{
-				col = Collision.boxGridSubstep(x0, y0, w, h, x1, y1, (i,j)=>{
-					let g = grid.get(i,j);
-					if(g===e.color || i>9 || j>9 || i<0 || j<0){
-						return [i,j];
-					}
-				});
-				if(col.side){
-					if(col.side.x){
-						x1=col.x;
-						e.vx = 0;
-					}
-					if(col.side.y){
-						let color = e.color;
-						if(col.side.y>0 && color!=1 || col.side.y<0 && color==1){
-							e.ground=true;
-						}
-						y1=col.y;
-						e.vy = 0;
-					}
-				}
-				x0 = col.x;
-				y0 = col.y;
-			} while (x0!=x1 || y0!=y1);
-			e.x = x1;
-			e.y = y1;
-		}
 		
-		function physicsStep(dt){
-			objects.forEach(e=>{
-				e.ground=false;
-				step(e,e.vx*dt,e.vy*dt);
-				//changeColorFromBackground(e);
-				//if(isOutOfColorToBe(e)){
-				//	e.color=e.colorToBe;
-				//}
-			});
-		}
 		
-		let mx = 0, my = 0;
 		
 		canvas.tabIndex=-1;
-		/*canvas.addEventListener("mousemove", (e)=>{
-			let p = getMousePos(canvas,e);
-			mx = p.x/gs;
-			my = p.y/gs;
-		});
-		*/
 		Input.listen(window);
 		
-		function changeColorToBeFromBackground(player){
-			let ret = [];
-			Collision.rasterizeBox(player.x,player.y,player.w,player.h,(i,j)=>{
-				ret.push(grid.get(i,j));
-			});
-			if(ret.length){
-				let col = ret[0];
-				let homogeneous = ret.findIndex(e=>(e !== col)) === -1;
-				if(homogeneous){
-					player.colorToBe = colorFunction(player.colorToBe, col);
-				}
-			}
-		}
+		let app = new App(60,ctx);
+		let gameState = new GameState(levelData);
+		gameState.init();
+		app.init(gameState);
 		
-		function changeColorFromBackground(player){
-			let ret = [];
-			Collision.rasterizeBox(player.x,player.y,player.w,player.h,(i,j)=>{
-				ret.push(grid.get(i,j));
-			});
-			if(ret.length){
-				let col = ret[0];
-				let homogeneous = ret.findIndex(e=>(e !== col)) === -1;
-				if(homogeneous){
-					player.color = colorFunction(player.color, col);
-				}
-			}
-		}
-		
-		
-		function colorOverwrite(a,b){
-			return b;
-		}
-		
-		function colorComplement(a,b){
-			let comp = b^a;
-			if(a+comp != b)
-				return a;	
-			return comp;
-		}
-		
-		var colorFunction = colorComplement;
-		
-		
-		
-		function isOutOfColorToBe(player){
-			let ret = true;
-			Collision.rasterizeBox(player.x,player.y,player.w,player.h,(i,j)=>{
-				if(grid.get(i,j)===player.colorToBe) ret = false;
-			});
-			return ret;
-		}
-		
-		
-		
-		
-		let loop = new Loop.RAFLoop((dt)=>update(dt*0.001),()=>render(gs));
-		loop.start();
 		
 		
 	</script>
