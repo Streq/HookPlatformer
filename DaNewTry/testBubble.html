@@ -1,0 +1,162 @@
+<html>
+
+<head>
+	<script src="collision.js"></script>
+	<script src="game.js"></script>
+	<script src="setup.js"></script>
+</head>
+
+<body>
+	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
+
+	<script src="testingRendering.js"></script>
+	<script>
+		let x0 = 0,
+			y0 = 0,
+			x1 = 0,
+			y1 = 0,
+			w = 1,
+			h = 1,
+			cx = 0,
+			cy = 0,
+			blocks = [
+				[2, 9],
+				[2, 11],
+
+				[14, 10],
+				[15, 10],
+				[16, 10],
+				[17, 10],
+				[18, 10],
+				[19, 10],
+				[20, 10],
+				[17, 7],
+				[17, 8],
+				[17, 9],
+				[17, 11],
+				[17, 12],
+				[17, 13],
+
+				[4, 10],
+				[5, 10],
+				[6, 10],
+				[8, 10],
+				[9, 10],
+				[10, 10],
+				[7, 7],
+				[7, 8],
+				[7, 9],
+				[7, 11],
+				[7, 12],
+				[7, 13],
+			],
+			dynamicBlocks = [
+				[3,3],
+				[5,3],
+				[8,3],
+				[12,3],
+				
+			],
+			grid = new DoubleArrayGrid(),
+			collisions = [],
+			touched = [],
+			mousedown = false;
+		
+		blocks.forEach((e)=>{
+			grid.set(e[0]  ,e[1],1);
+			grid.set(e[0]+5,e[1]+2,1);
+			grid.set(e[0]  ,e[1]+2,1);
+			grid.set(e[0]-5,e[1]-2,1);
+		});
+
+
+		function render() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			grid.forEach((e,x,y) => {
+				ctx.fillStyle = "blue";
+				if(!e)return;
+				ctx.fillRect(x * gs, y * gs, gs, gs);
+			});
+			dynamicBlocks.forEach((e)=>{
+				let x = e[0], y=e[1];
+				ctx.strokeStyle = "yellow";
+				if(!e)return;
+				ctx.strokeRect(x * gs, y * gs, gs, gs);
+			})
+			//touched.forEach((e) => {
+			//	ctx.fillStyle = "red";
+			//	ctx.fillRect(e[0] * gs, e[1] * gs, gs, gs);
+			//})
+			let i = 0;
+			collisions.forEach((e) => {
+			//	drawTile(e[0], e[1], ++i);
+			});
+
+			drawMovingBlock(x0, y0, x1, y1);
+			touched = [];
+			collisions = []
+		}
+		
+		function check(x,y){
+			let g = grid.get(x,y);
+			return g && [x,y];
+		}
+		
+		
+		
+
+		function step(x_, y_) {
+			x0 = x1;
+			y0 = y1;
+			let col;
+			do{
+				col = Collision.boxGridSubstep(x1, y1, w, h, x_, y_, check);
+				collisions = col.gridtiles.concat(collisions);
+				touched = col.touched.concat(touched)
+				if(col.side){
+					if(col.side.x){
+						x_=col.x;
+					}
+					if(col.side.y){
+						y_=col.y;
+					}
+				}
+				x1 = col.x;
+				y1 = col.y;
+			}while(x_!=x1 || y_!=y1);
+			
+		}
+
+		
+
+		
+		
+		render();
+
+		let pos;
+		const dothething = (e) => {
+			pos = getMousePos(canvas, e);
+		};
+		document.body.addEventListener("mousemove", dothething);
+		var movermouse = true;
+		document.body.addEventListener("keypress", () => {
+			if (movermouse=!movermouse) {
+				document.body.removeEventListener("mousemove", dothething);
+				document.body.addEventListener("click", dothething);
+			} else {
+				document.body.removeEventListener("click", dothething);
+				document.body.addEventListener("mousemove", dothething);
+			}
+		});
+		
+		setInterval(()=>{
+			let dx = (pos.x/gs-(w*0.5)-x1)*0.1;
+			let dy = (pos.y/gs-(h*0.5)-y1)*0.1;
+			
+			step(x1+dx, y1+dy);
+			render();
+		},1000/60);
+	</script>
+</body>
+
+</html>

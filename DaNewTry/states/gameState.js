@@ -30,7 +30,16 @@ const COLORS_BEHAVIOUR = [
 		jumpSpeed: 5,
 		friction:2,
 	},
-	null,
+	{
+		vSpeed: 10,
+		hSpeed: 10,
+		vGravity: 0,
+		hGravity: 0,
+		vGround: 1,
+		hGround: 0,
+		jumpSpeed: 5,
+		friction:2,
+	},
 	{
 		vSpeed: 10,
 		hSpeed: 0,
@@ -41,11 +50,20 @@ const COLORS_BEHAVIOUR = [
 		jumpSpeed: 5,
 		friction:2,
 	},
-	null,
 	{
 		vSpeed: 10,
 		hSpeed: 10,
-		vGravity: 5,
+		vGravity: 0,
+		hGravity: 0,
+		vGround: 1,
+		hGround: 0,
+		jumpSpeed: 5,
+		friction:2,
+	},
+	{
+		vSpeed: 10,
+		hSpeed: 10,
+		vGravity: 0,
 		hGravity: 0,
 		vGround: 1,
 		hGround: 0,
@@ -94,6 +112,37 @@ function isOutOfColorToBe(player){
 
 
 
+class MovingTile {
+	constructor(color, x, y, states) {
+		this.color = color;
+		this.x = x;
+		this.y = y;
+		this.states = states;
+		this.index = -1;
+	}
+	
+	nextState(){
+		return this.state = Object.assign({},this.states[(++this.index) % this.states.length]);
+	}
+	
+	update(dt, gameState) {
+		let s = this.state || this.nextState();
+		if(s.lag>0){
+			s.lag -= dt;
+		}else if(this.x!=s.goal.x || this.y!=s.goal.y){
+			let d = s.speed*dt;
+			this.x0 = this.x,
+			this.y0 = this.y;
+			
+			this.x = Math2.approach(this.x, s.goal.x, d);
+			this.y = Math2.approach(this.y, s.goal.y, d);
+			
+			
+		}else{
+			this.nextState();
+		}
+	}
+}
 
 class Player {
 	constructor(color, x, y) {
@@ -160,14 +209,13 @@ class GameState {
 	constructor(levelData) {
 		this.grid = new SingleArrayGrid(levelData.width);
 		this.grid.grid = levelData.grid;
+		this.movingTilesSpawn = levelData.movingTiles;
 		this.spawn = levelData.spawnPoint;
 		this.spawnCol = levelData.initCol;
 	}
 
 	update(dt) {
 		dt *= 0.001;
-		//update entity behaviour
-		//player.update(dt);
 		let pj = this.player;
 		//move towards mouse
 		let inp = Input.getFrameInput();
@@ -175,7 +223,9 @@ class GameState {
 		let vv = (+!!inp.D - !!inp.U);
 		let hv = (+!!inp.R - !!inp.L);
 
-
+		let frameGrid = this.frameGrid = new SingleArrayGrid(this.grid.width);
+		frameGrid.grid = [...this.grid.grid];
+		
 
 		let down = 1;
 		if (pj.color == 1) down *= -1;
@@ -190,6 +240,13 @@ class GameState {
 		Input.previous = inp;
 
 		pj.update(dt, this);
+		this.movingTiles.forEach(e=>e.update(dt,this));
+		this.movingTiles.forEach(e=>{
+			Collision.rasterizeBox(e.x,e.y,1,1,(x,y)=>{
+				frameGrid.set(x,y,e.color);
+			});
+		});
+		
 		//update world
 		this.physicsStep(dt);
 
@@ -197,37 +254,16 @@ class GameState {
 
 	render(ctx) {
 		let size = gs;
-		let grid = this.grid;
+		let grid = this.frameGrid;
+		
+		let tiles = this.movingTiles;
 		let player = this.player;
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-		this.renderGrid(grid, size, ctx);
-		ctx.fillStyle = COLORS[player.color];
-		ctx.fillRect(player.x * size, player.y * size, player.w * size, player.h * size);
-
+		renderGrid(grid, size, ctx, player.color);
+		renderTiles(tiles, size, ctx);
+		renderPlayer(player, size, ctx);
 	}
-	renderGrid(grid, size, ctx) {
-		let player = this.player;
-		grid.forEach((tile, x, y) => {
-
-			/**if(tile == player.color){/**/
-			ctx.fillStyle = COLORS[tile];
-			ctx.fillRect(x * size, y * size, size, size);
-
-			/**}else if(colorComplement(player.color,tile)!=player.color){
-				ctx.fillStyle = COLORS[tile];
-				ctx.fillRect(x*size,y*size,size,size);
-				ctx.fillStyle = "#000";
-				ctx.fillRect(x*size+4,y*size+4,size-8,size-8);
-
-			} else {
-				ctx.fillStyle = COLORS[tile];
-				ctx.fillRect(x*size,y*size,size,size);
-				ctx.fillStyle = "#000";
-				ctx.fillRect(x*size+0.5,y*size+0.5,size-1,size-1);
-			}/**/
-		});
-	}
-
+	
 	step(e, dx, dy) {
 		let x0 = e.x,
 			y0 = e.y,
@@ -235,7 +271,7 @@ class GameState {
 			y1 = e.y + dy,
 			w = e.w,
 			h = e.h;
-		let grid = this.grid;
+		let grid = this.frameGrid;
 		let col;
 		do {
 			col = Collision.boxGridSubstep(x0, y0, w, h, x1, y1, (i, j) => {
@@ -272,6 +308,74 @@ class GameState {
 
 	}
 	init() {
-		this.player = new Player(this.spawn.x, this.spawn.y, this.spawnCol);
+		this.player = new Player(this.spawnCol,this.spawn.x, this.spawn.y);
+		this.movingTiles = [];
+		if(this.movingTilesSpawn){
+			this.movingTilesSpawn.forEach(e=>{
+				this.movingTiles.push(new MovingTile(e.color, e.x, e.y, e.states));
+			});
+		}
 	}
 }
+
+function renderPlayer(player, size, ctx){
+	ctx.fillStyle = COLORS[player.color];
+	ctx.fillRect(player.x * size, player.y * size, player.w * size, player.h * size);
+}
+function renderKey(k, size, ctx){
+	let x = k.x * size;
+	let y = k.y * size;
+	let w = k.w * size;
+	let h = k.h * size;
+	ctx.fillStyle = COLORS[k.color];
+	ctx.beginPath();
+	ctx.rect(x, y, w, h);
+	ctx.fill();
+	ctx.closePath();
+}
+function renderKeyHole(k, size, ctx){
+	let x = k.x * size;
+	let y = k.y * size;
+	let w = k.w * size;
+	let h = k.h * size;
+	ctx.strokeStyle = COLORS[k.color];
+	ctx.beginPath();
+	ctx.lineWidth=2;
+	ctx.rect(x, y, w, h);
+	ctx.stroke();
+	ctx.closePath();
+}
+function renderGrid(grid, size, ctx) {
+	grid.forEach((tile, x, y) => {
+		ctx.fillStyle = COLORS[tile];
+		ctx.fillRect(x * size, y * size, size, size);
+	});
+}
+
+function renderTiles(grid, size, ctx) {
+	grid.forEach((t) => {
+		ctx.fillStyle = COLORS[t.color];
+		ctx.fillRect(t.x * size, t.y * size, size, size);
+	});
+}
+function renderGridSolid(grid, size, ctx, color) {
+	grid.forEach((tile, x, y) => {
+
+		if(tile == color){
+		ctx.fillStyle = COLORS[tile];
+		ctx.fillRect(x * size, y * size, size, size);
+
+		} else if(colorComplement(color,tile)!=color){
+			ctx.fillStyle = COLORS[tile];
+			ctx.fillRect(x*size,y*size,size,size);
+			ctx.fillStyle = "#000";
+			ctx.fillRect(x*size+4,y*size+4,size-8,size-8);
+		} else {
+			ctx.fillStyle = COLORS[tile];
+			ctx.fillRect(x*size,y*size,size,size);
+			ctx.fillStyle = "#000";
+			ctx.fillRect(x*size+0.5,y*size+0.5,size-1,size-1);
+		}
+	});
+}
+
