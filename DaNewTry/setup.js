@@ -352,3 +352,18 @@ var Math2 = {
 		return Math2.clamp(v, Math.min(a, b), Math.max(a, b));
 	}
 }
+
+////////////////////////////////////////////////////////////////
+//COLOR UTILS
+////////////////////////////////////////////////////////////////
+var Color = {
+	itos(_0xRRGGBB){
+		return '#' + Number(_0xRRGGBB).toString(16).padStart(6,'0');
+	},
+	stoi(_RRGGBB){
+		return parseInt(_RRGGBB.substr(1),16);
+	},
+	complement(_RRGGBB){
+		return this.itos(0xffffff ^ this.stoi(_RRGGBB));
+	}
+}

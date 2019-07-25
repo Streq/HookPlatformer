@@ -1,0 +1,181 @@
+<html>
+
+<head>
+	<style>
+		/* Create two equal columns that floats next to each other */
+		.column {
+		  float: left;
+		  padding: 10px;
+		  height: 300px; /* Should be removed. Only for demonstration */
+		}
+
+		/* Clear floats after the columns */
+		.row:after {
+		  content: "";
+		  display: table;
+		  clear: both;
+		}
+	</style>
+	<script src="../collision.js"></script>
+	<script src="../app.js"></script>
+	<script src="../setup.js"></script>
+	<script src="../gridCollisionWorld.js"></script>
+	<script src="../states/gameState.js"></script>
+	
+</head>
+
+<body>
+	<div class="row">
+		<div class="column">
+			<canvas  id="canvas" style="background-color:black"></canvas>
+		</div><div class="column">
+			<p>This is a demo</p>
+			<p>get to the white square</p>
+			<p>move with arrows, jump with Z, the usual stuff</p>
+			<p>X does something depending on your color and the background color</p>
+		</div>
+	</div>
+	<script src="../states/gameState/globals.js" ></script>
+	<script>
+		//mock data
+		let grid = new SingleArrayGrid(10);
+		
+		let levelData = {
+			spawnPoint: {x:1, y:1},
+			grid: [
+				2,2,2,2,2,2,2,2,2,2,
+				2,1,2,2,2,2,2,2,1,2,
+				2,2,2,2,1,2,2,2,2,2,
+				2,2,2,1,1,2,1,1,2,2,
+				2,2,1,1,1,2,1,1,2,2,
+				2,2,1,1,1,2,1,1,2,2,
+				2,1,2,2,2,2,2,2,1,2,
+				2,2,2,2,2,2,2,2,2,2,
+				2,1,2,2,2,2,2,2,1,2,
+				2,2,2,2,2,2,2,2,2,2,
+			],
+			movingTiles: [
+				{
+					color:3,
+					x:1,
+					y:1,
+					states: [ 
+						{
+							lag:0,
+							goal:{x:1,y:1},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:1,y:8},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:8,y:8},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:8,y:1},
+							speed:1
+						}
+					]
+				},
+				{
+					color:3,
+					x:8,
+					y:8,
+					states: [ 
+						{
+							lag:0,
+							goal:{x:8,y:8},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:8,y:1},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:1,y:1},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:1,y:8},
+							speed:1
+						},
+						
+					]
+				},
+				{
+					color:3,
+					x:8,
+					y:1,
+					states: [ 
+						{
+							lag:0,
+							goal:{x:8,y:1},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:1,y:1},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:1,y:8},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:8,y:8},
+							speed:1
+						},
+						
+					]
+				},
+				{
+					color:3,
+					x:1,
+					y:8,
+					states: [ 
+						{
+							lag:0,
+							goal:{x:1,y:8},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:8,y:8},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:8,y:1},
+							speed:1
+						},
+						{
+							lag:0,
+							goal:{x:1,y:1},
+							speed:1
+						},
+						
+						
+					]
+				},
+				
+			],
+			width: 10,
+			initCol: 2
+		};
+		
+	</script>
+	<script src="../states/gameState/run.js" ></script>
+	
+</body>
+
+</html>

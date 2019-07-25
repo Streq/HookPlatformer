@@ -176,7 +176,26 @@ var Collision = (() => {
 			)
 		);
 	}
+	
+	function minkowskiDiff(x0,y0,w0,h0,x1,y1,w1,h1){
+		return{
+			x: x1 - x0 - w0, //minkdif x
+			y: y1 - y0 - h0, //minkdif y
+			w: w0 + w1, //minkdif w
+			h: h0 + h1 //minkdif h
+		}
+	}
 
+	function minkowskiInside(x0,y0,w0,h0,x1,y1,w1,h1){
+		return{
+			x: - x0 + x1, //minkdif x
+			y: - y0 + y1, //minkdif y
+			w: w1 - w0, //minkdif w
+			h: h1 - h0//minkdif h
+		}
+	}
+	
+	
 	function boxBoxIntersection(x0, y0, w0, h0, x1, y1, w1, h1) {
 		var x = Math.max(x0, x1);
 		var y = Math.max(y0, y1)
@@ -362,11 +381,13 @@ var Collision = (() => {
 		let pbox = Math.max(0,-sx);
 		let pboy = Math.max(0,-sy);
 		
+		let dw = +(sx > 0)*w;
+		let dh = +(sy > 0)*h;
 		
-		x0 += +(sx > 0)*w;//if moving right x is x+w
-		x1 += +(sx > 0)*w;//if moving right x1 is x1+w
-		y0 += +(sy > 0)*h;//if moving down y is y+h
-		y1 += +(sy > 0)*h;//if moving down y1 is y1+h
+		x0 += dw;//if moving right x is x+w
+		x1 += dw;//if moving right x1 is x1+w
+		y0 += dh;//if moving down y is y+h
+		y1 += dh;//if moving down y1 is y1+h
 		
 		w *= -sx||-1;
 		h *= -sy||-1;
@@ -409,24 +430,24 @@ var Collision = (() => {
 				//si es retroceso es i+1, si es avance es i
 				y_ = y0 + Math.abs(i  + pbox  - x0)*n;
 				let j_h = rtiley(y_ + h);//get baldoza rear en y
-				ret = callback(i, j_h, 0, sy, i, y_);
+				ret = callback(i, j_h, sx, 0, i-dw, y_-dh);
 				if(ret!=null)return ret;
 				let sy_ = Math.sign(j_h-j);
 				for(let j_ = j_h; j_ != j;){
 					j_ += sy;
-					ret = callback(i, j_, 0, sy, i, y_);
+					ret = callback(i, j_, sx, 0, i-dw, y_-dh);
 					if(ret!=null)return ret;
 				}
 			}
 			j+=sy;
 			x_ = x0 + Math.abs(j + pboy - y0)*m;
 			let i_w = rtilex(x_ + w);
-			ret = callback(i_w, j);
+			ret = callback(i_w, j, 0, sy, x_-dw, j-dh);
 			if(ret!=null)return ret;
 			let sx_ = Math.sign(i_w-i);
 			for(let i_ = i_w; i_ != i;){
 				i_ += sx;
-				ret=callback(i_, j);
+				ret = callback(i_, j, 0, sy, x_-dw, j-dh);
 				if(ret!=null)return ret;
 			}
 			//de (8.23, 3) a (13.605, 4)
@@ -436,12 +457,12 @@ var Collision = (() => {
 			i += sx;
 			y_ = y0 + Math.abs(i + pbox - x0)*n;
 			let j_h = rtiley(y_ + h);
-			ret = callback(i, j_h,0,sy,i,y_);
+			ret = callback(i, j_h, sx, 0, i-dw, y_-dh);
 			if(ret!=null)return ret;
 			let sy_ = Math.sign(j_h-j);
 			for(let j_ = j_h; j_ != j;){
 				j_ += sy;
-				ret = callback(i, j_);
+				ret = callback(i, j_, sx, 0, i-dw, y_-dh);
 				if(ret!=null)return ret;
 			}
 		}
@@ -608,11 +629,47 @@ var Collision = (() => {
 			}
 		}	
 	
+	function boxLineNew(x,y,w,h,a,b,c,d){
+		let dx = c-a;
+		let dy = d-b;
+		let n = 1/dx;
+		let m = 1/dy;
+		
+		//si representamos el segmento como 
+		//S(t) = A + t * (B - A)
+		// con t >= 0 && t <= 1
+		//tonces
+		//(S(t) - A) / (B - A) = t
+		//nos fijamos cuanto es t para el borde izquierdo del rect
+		let tx1 = (x - a)*n;
+		//nos fijamos cuanto es t para el borde derecho del rect
+		let tx2 = (x+w - a)*n;
+
+		//nos fijamos t para el borde superior
+		let ty1 = (y - b)*m;
+		//nos fijamos t para el borde inferior
+		let ty2 = (y+h - b)*m;
+
+		//de haber interseccion:
+		//el tmin es la primera instancia de t para la cual x e y estan en el rect
+		//es decir, el t mayor entre txmin y tymin
+		let tmin = Math.max(Math.min(tx1, tx2), Math.min(ty1, ty2));
+		//el tmin es la ultima instancia de t para la cual x e y estan en el rect
+		//es decir, el t menor entre txmax y tymax
+		let tmax = Math.min(Math.max(tx1, tx2), Math.max(ty1, ty2));
+
+		return tmax >= tmin && (		// tmax solo es menor si los intervalos (txmin,txmax) y (tymin,tymax) no se tocan
+			(tmin > 0 && tmin < 1) ||	// la primera colision ocurre dentro del segmento
+			(tmin <= 0 && tmax > 0)		// la primera colision ocurre retrocediendo pero la segunda avanzando -> esta dentro del rect
+		);
+	}
+	
+	
 	mod.boxPoint = boxPoint;
 	mod.boxBox = boxBox;
 	mod.lineLine = lineLine;
 	mod.lineLineLambda = lineLineLambda;
-	mod.boxLine = boxLine;
+	mod.boxLine = boxLineNew;
 	mod.boxLineLambda = boxLineLambda
 	mod.boxBoxMoving = boxBoxMoving;
 	mod.boxBoxMovingLambda = boxBoxMovingLambda;
@@ -628,6 +685,8 @@ var Collision = (() => {
 	
 	mod.rasterizeBox = rasterizeBox;
 	mod.boxGridSubstep = boxGridSubstep;
+	
+	mod.minkowskiDiff = minkowskiDiff;
 	
 	return mod;
 })();

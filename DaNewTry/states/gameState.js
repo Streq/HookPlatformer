@@ -1,12 +1,12 @@
 const COLORS = [
-			"#000",
-			"#00f",
-			"#0f0",
-			"#0ff",
-			"#f00",
-			"#f0f",
-			"#ff0",
-			"#fff",
+			"#000000",
+			"#0000ff",
+			"#00ff00",
+			"#00ffff",
+			"#ff0000",
+			"#ff00ff",
+			"#ffff00",
+			"#ffffff",
 		];
 const COLORS_BEHAVIOUR = [
 	null,
@@ -199,7 +199,7 @@ class Player {
 		
 		//changeColors
 		if (this.behaviour.change) {
-			changeColorFromBackground(this, gameState.grid);
+			changeColorFromBackground(this, gameState.frameGrid);
 		}
 	}
 
@@ -274,32 +274,80 @@ class GameState {
 		let grid = this.frameGrid;
 		let col;
 		do {
-			col = Collision.boxGridSubstep(x0, y0, w, h, x1, y1, (i, j) => {
-				let g = grid.get(i, j);
-				if (g === e.color || i > 9 || j > 9 || i < 0 || j < 0) {
-					return [i, j];
+			let cols = this.getStaticCollisions(e,dx,dy);
+			if(cols.length){
+				col = cols[0];
+				
+				let m = dy / dx;
+				let n = dx / dy;
+				
+				if (col.side) {
+					let color = e.color;
+					let cb = COLORS_BEHAVIOUR[color];
+					if (cb.hGround == Math.sign(col.side.x) || cb.vGround == Math.sign(col.side.y)) {
+						e.ground = true;
+					}
+					if (col.side.x) {
+						if(col.side.x<0){
+							x1 = col.tile.x + 1;
+						}else{
+							x1 = col.tile.x - w;
+						}
+						
+						y0 = y0 + m * (x1 - x0);
+						e.vx = 0;
+						dx = 0;
+					}
+					if (col.side.y) {
+						if(col.side.y<0){
+							y1 = col.tile.y + 1;
+						}else{
+							y1 = col.tile.y - h;
+						}
+						
+						x0 = x0 + n * (y1 - y0);
+						e.vy = 0;
+						dy = 0;
+					}
 				}
-			});
-			if (col.side) {
-				let color = e.color;
-				let cb = COLORS_BEHAVIOUR[color];
-				if (cb.hGround == Math.sign(col.side.x) || cb.vGround == Math.sign(col.side.y)) {
-					e.ground = true;
-				}
-				if (col.side.x) {
-					x1 = col.x;
-					e.vx = 0;
-				}
-				if (col.side.y) {
-					y1 = col.y;
-					e.vy = 0;
-				}
+			}else{
+				x0 = x1;
+				y0 = y1;
 			}
-			x0 = col.x;
-			y0 = col.y;
 		} while (x0 != x1 || y0 != y1);
 		e.x = x1;
 		e.y = y1;
+	}
+	getStaticCollisions(e,dx,dy){
+		let collisions = [],
+			x0 = e.x,
+			y0 = e.y,
+			x1 = e.x + dx,
+			y1 = e.y + dy,
+			w = e.w,
+			h = e.h,
+			grid = this.frameGrid;
+		
+		Collision.rasterizeBoxMoving(x0, y0, w, h, x1, y1, (i, j, sx, sy, x, y) => {
+			let g = grid.get(i, j);
+			if (g === e.color) {
+				collisions.push({
+					tile:{x:i,y:j},
+					side:{x:sx,y:sy},
+				});
+			}
+		});
+		return collisions;
+	}
+	getDynamicCollisions(e,dx,dy){
+		let sameColor = [];
+		let diffColor = [];
+		
+		this.movingTiles.forEach(t=>{
+			if(t.color == e.color){
+				//TODO
+			}
+		})
 	}
 	physicsStep(dt) {
 		let e = this.player;
@@ -354,8 +402,8 @@ function renderGrid(grid, size, ctx) {
 
 function renderTiles(grid, size, ctx) {
 	grid.forEach((t) => {
-		ctx.fillStyle = COLORS[t.color];
-		ctx.fillRect(t.x * size, t.y * size, size, size);
+		ctx.strokeStyle = Color.complement(COLORS[t.color]);
+		ctx.strokeRect(t.x * size, t.y * size, size, size);
 	});
 }
 function renderGridSolid(grid, size, ctx, color) {
@@ -378,4 +426,7 @@ function renderGridSolid(grid, size, ctx, color) {
 		}
 	});
 }
-
+//rgb must be a number in 0xrrggbb format
+function complementColor(_0xRRGGBB){
+	var complement = 0xffffff ^ _0xRRGGBB;
+}

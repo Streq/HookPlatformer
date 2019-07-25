@@ -1,9 +1,9 @@
 <html>
 
 <head>
-	<script src="collision.js"></script>
-	<script src="game.js"></script>
-	<script src="setup.js"></script>
+	<script src="../collision.js"></script>
+	<script src="../game.js"></script>
+	<script src="../setup.js"></script>
 </head>
 
 <body>
@@ -15,8 +15,8 @@
 			y0 = 0,
 			x1 = 0,
 			y1 = 0,
-			w = 1,
-			h = 1,
+			w = 0.75,
+			h = 0.75,
 			cx = 0,
 			cy = 0,
 			blocks = [
@@ -50,13 +50,6 @@
 				[7, 12],
 				[7, 13],
 			],
-			dynamicBlocks = [
-				[3,3],
-				[5,3],
-				[8,3],
-				[12,3],
-				
-			],
 			grid = new DoubleArrayGrid(),
 			collisions = [],
 			touched = [],
@@ -77,19 +70,13 @@
 				if(!e)return;
 				ctx.fillRect(x * gs, y * gs, gs, gs);
 			});
-			dynamicBlocks.forEach((e)=>{
-				let x = e[0], y=e[1];
-				ctx.strokeStyle = "yellow";
-				if(!e)return;
-				ctx.strokeRect(x * gs, y * gs, gs, gs);
+			touched.forEach((e) => {
+				ctx.fillStyle = "red";
+				ctx.fillRect(e[0] * gs, e[1] * gs, gs, gs);
 			})
-			//touched.forEach((e) => {
-			//	ctx.fillStyle = "red";
-			//	ctx.fillRect(e[0] * gs, e[1] * gs, gs, gs);
-			//})
 			let i = 0;
 			collisions.forEach((e) => {
-			//	drawTile(e[0], e[1], ++i);
+				drawTile(e[0], e[1], ++i);
 			});
 
 			drawMovingBlock(x0, y0, x1, y1);
