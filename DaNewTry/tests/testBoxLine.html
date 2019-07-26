@@ -1,14 +1,36 @@
 <html>
 
 <head>
+	<style>
+		/* Create two equal columns that floats next to each other */
+		.column {
+		  float: left;
+		  padding: 10px;
+		}
+
+		/* Clear floats after the columns */
+		.row:after {
+		  content: "";
+		  display: table;
+		  clear: both;
+		}
+	</style>
 	<script src="../collision.js"></script>
 	<script src="../game.js"></script>
 	<script src="../setup.js"></script>
 </head>
 
 <body>
-	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
-
+	<div class="row">
+		<div class="column">
+			<canvas id="canvas" width=400 height=400 style="background-color:black"></canvas>
+		</div><div class="column">
+			<p>AABB-segment intersection test</p>
+			<p>mousemove -> updates x1</p>
+			<p>click -> updates x0</p>
+			<p></p>
+		</div>
+	</div>
 	<script src="testingRendering.js"></script>
 	<script>
 		const ts = 32;
@@ -50,8 +72,6 @@
 				y1:0
 			}
 		function render() {
-			
-			
 			let c = Collision.boxLineData(box.x,box.y,box.w,box.h,line.x0,line.y0,line.x1,line.y1);
 			let tmin = c.tmin;
 			let tmax = c.tmax;
