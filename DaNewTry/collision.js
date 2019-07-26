@@ -629,6 +629,8 @@ var Collision = (() => {
 			}
 		}	
 	
+	
+	
 	function boxLineNew(x,y,w,h,a,b,c,d){
 		let dx = c-a;
 		let dy = d-b;
@@ -664,12 +666,65 @@ var Collision = (() => {
 		);
 	}
 	
+	function boxLineData(x,y,w,h,a,b,c,d){
+		let dx = c-a;
+		let dy = d-b;
+		let n = 1/dx;
+		let m = 1/dy;
+		
+		//si representamos el segmento como 
+		//S(t) = A + t * (B - A)
+		// con t >= 0 && t <= 1
+		//tonces
+		//(S(t) - A) / (B - A) = t
+		//nos fijamos cuanto es t para el borde izquierdo del rect
+		let tx1 = (x - a)*n;
+		//nos fijamos cuanto es t para el borde derecho del rect
+		let tx2 = (x+w - a)*n;
+
+		//nos fijamos t para el borde superior
+		let ty1 = (y - b)*m;
+		//nos fijamos t para el borde inferior
+		let ty2 = (y+h - b)*m;
+
+		let txmin = Math.min(tx1, tx2);
+		let tymin =  Math.min(ty1, ty2);
+		
+		let txmax = Math.max(tx1, tx2);
+		let tymax =  Math.max(ty1, ty2);
+		
+		//de haber interseccion:
+		//el tmin es la primera instancia de t para la cual x e y estan en el rect
+		//es decir, el t mayor entre txmin y tymin
+		let tmin = Math.max(txmin, tymin);
+		//el tmin es la ultima instancia de t para la cual x e y estan en el rect
+		//es decir, el t menor entre txmax y tymax
+		let tmax = Math.min(txmax, tymax);
+		
+		let sdx = Math.sign(dx);
+		let sdy = Math.sign(dy);
+		
+		return {
+			tmin:tmin,
+			tmax:tmax,
+			smin:{
+				x: (tmin == txmin) && -sdx,
+				y: (tmin == tymin) && -sdy
+			},
+			smax:{
+				x: (tmax == txmax) && sdx,
+				y: (tmax == tymax) && sdy
+			},
+		};
+	}
+	
 	
 	mod.boxPoint = boxPoint;
 	mod.boxBox = boxBox;
 	mod.lineLine = lineLine;
 	mod.lineLineLambda = lineLineLambda;
 	mod.boxLine = boxLineNew;
+	mod.boxLineData = boxLineData;
 	mod.boxLineLambda = boxLineLambda
 	mod.boxBoxMoving = boxBoxMoving;
 	mod.boxBoxMovingLambda = boxBoxMovingLambda;
