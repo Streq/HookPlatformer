@@ -11,14 +11,22 @@
 
 	<script src="testingRendering.js"></script>
 	<script>
-		let x0 = 0,
-			y0 = 0,
-			x1 = 0,
-			y1 = 0,
-			w = 1,
-			h = 1,
-			cx = 0,
-			cy = 0,
+	
+		let box = {
+				x:0,
+				y:0,
+				w:.75,
+				h:.75
+			},
+			lastFrame = {
+				x0:0,
+				y0:0,
+				x1:0,
+				y1:0,
+				stops:[{x:0,y:0},{x:0,y:0}],
+				collisions:[],
+				touched:[]
+			},
 			blocks = [
 				[2, 9],
 				[2, 11],
@@ -50,11 +58,9 @@
 				[7, 12],
 				[7, 13],
 			],
-			dynamicBlocks = [
-				[3,3],
-				[5,3],
-				[8,3],
-				[12,3],
+			bubbles = [
+				[4.2,5.1,13.4,14.5],
+				[20,0,1,20],
 				
 			],
 			grid = new DoubleArrayGrid(),
@@ -70,48 +76,101 @@
 		});
 
 
-		function render() {
+		function render(frame) {
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			grid.forEach((e,x,y) => {
 				ctx.fillStyle = "blue";
 				if(!e)return;
 				ctx.fillRect(x * gs, y * gs, gs, gs);
 			});
-			dynamicBlocks.forEach((e)=>{
-				let x = e[0], y=e[1];
-				ctx.strokeStyle = "yellow";
-				if(!e)return;
-				ctx.strokeRect(x * gs, y * gs, gs, gs);
+			
+			bubbles.forEach(e=>{
+				ctx.strokeStyle="#0f0";
+				ctx.strokeRect(e[0]*gs,e[1]*gs,e[2]*gs,e[3]*gs)
+				ctx.fillStyle="#0707";
+				ctx.fillRect(e[0]*gs,e[1]*gs,e[2]*gs,e[3]*gs)
 			})
-			//touched.forEach((e) => {
-			//	ctx.fillStyle = "red";
-			//	ctx.fillRect(e[0] * gs, e[1] * gs, gs, gs);
-			//})
+			frame.touched.forEach((e) => {
+				ctx.fillStyle = "red";
+				ctx.fillRect(e[0] * gs, e[1] * gs, gs, gs);
+			})
 			let i = 0;
-			collisions.forEach((e) => {
-			//	drawTile(e[0], e[1], ++i);
+			frame.collisions.forEach((e) => {
+				drawTile(e[0], e[1], ++i);
 			});
-
-			drawMovingBlock(x0, y0, x1, y1);
-			touched = [];
-			collisions = []
+			frame.stops.forEach((e,i,a)=>{
+				let next = a[i+1];
+				if(next){
+					drawMovingBox(e.x, e.y, box.w, box.h, next.x, next.y);
+				}
+			})
+			
 		}
 		
-		function check(x,y){
-			let g = grid.get(x,y);
-			return g && [x,y];
-		}
+		
+		/*
+		for all static tiles touched ->
+			check if collision happens inside a bubble ->
+				if yes -> 	
+					store bubble
+					ignore collision
+				if no ->
+					stop checking static tiles and store t, side, position at time of impact, and collided tile/s
+		for all bubbles stored -> 
+			check if there's an inner side collision -> 
+				check if it happens outside any solid tiles
+					if yes ->
+						stop checking bubble tiles and store t, side, position at time of impact, and collided tile/s
+		*/
 		
 		
 		
-
+		
+		
 		function step(x_, y_) {
-			x0 = x1;
-			y0 = y1;
+			let collisions = [],
+				touched = [],
+				stops = [],
+				x0 = box.x,
+				y0 = box.y,
+				x1 = box.x,
+				y1 = box.y,
+				targetx = x_,
+				targety = y_;
+			stops.push({x:x0,y:y0});
+			
+			
 			let col;
 			do{
-				col = Collision.boxGridSubstep(x1, y1, w, h, x_, y_, check);
-				collisions = col.gridtiles.concat(collisions);
+				let dx = x_ - x1;
+				let dy = y_ - y1;
+				
+				col = Collision.boxGridSubstep(x1, y1, box.w, box.h, x_, y_, 
+					(i,j, x, y, sx, sy)=>{
+						let g = grid.get(i,j);
+						let col = g;
+						if(g){
+							bubbles.forEach(e=>{
+								if(Collision.boxBox(e[0],e[1],e[2],e[3],i,j,1,1)){
+									//get intersection between box and tile
+									//which will be a box with width = 0 or height = 0
+									//representing the collision surface
+									let ix = Math.max(x,i);
+									let iy = Math.max(y,j);
+									let iw = Math.min(x+box.w,i+1)-ix;
+									let ih = Math.min(y+box.h,j+1)-iy;
+									//if the collided surface is entirely inside the bubble ignore
+									if(Collision.boxContainsBox(e[0],e[1],e[2],e[3],ix,iy,iw,ih)){
+										col = false;
+									}
+									
+								}
+							})
+						}
+						return col && [i,j];
+					}
+				);
+				collisions = collisions.concat(col.gridtiles);
 				touched = col.touched.concat(touched)
 				if(col.side){
 					if(col.side.x){
@@ -123,7 +182,21 @@
 				}
 				x1 = col.x;
 				y1 = col.y;
+				
+				stops.push({x:x1,y:y1});
+				
 			}while(x_!=x1 || y_!=y1);
+			box.x = x1;
+			box.y = y1;
+			return {
+				x0:x0,
+				y0:y0,
+				x1:targetx,
+				y1:targety,
+				stops:stops,
+				touched:touched,
+				collisions:collisions,
+			}
 			
 		}
 
@@ -131,7 +204,7 @@
 
 		
 		
-		render();
+		render(lastFrame);
 
 		let pos;
 		const dothething = (e) => {
@@ -149,13 +222,32 @@
 			}
 		});
 		
-		setInterval(()=>{
-			let dx = (pos.x/gs-(w*0.5)-x1)*0.1;
-			let dy = (pos.y/gs-(h*0.5)-y1)*0.1;
+		let frame = (x,y)=>{
+			lastFrame = step(x, y);
 			
-			step(x1+dx, y1+dy);
-			render();
-		},1000/60);
+			render(lastFrame);
+			
+		}
+		let repeatThat = ()=>{
+			box.x = lastFrame.x0;
+			box.y = lastFrame.y0;
+			frame(lastFrame.x1,lastFrame.y1);
+		}
+		let repeatThatButInReverse = ()=>{
+			box.x = lastFrame.x1;
+			box.y = lastFrame.y1;
+			frame(lastFrame.x0,lastFrame.y0);
+		}
+		
+		//document.body.addEventListener("mousemove",
+		
+		setInterval(
+			()=>{
+				let dx = (pos.x/gs-(box.w*0.5)-box.x)//*0.1;
+				let dy = (pos.y/gs-(box.h*0.5)-box.y)//*0.1;
+				frame(box.x+dx, box.y+dy);
+			}
+		,1000/60);
 	</script>
 </body>
 

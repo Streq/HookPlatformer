@@ -26,6 +26,12 @@ var Collision = (() => {
 			(x1 + w1 > x0)
 		);
 	}
+	function rangeContainsRange(x0, w0, x1, w1) {
+		return (
+			(x0 <= x1) &&
+			(x0 + w0 >= x1 + w1)
+		);
+	}
 
 	function boxBox(x0, y0, w0, h0, x1, y1, w1, h1) {
 		return (
@@ -47,13 +53,28 @@ var Collision = (() => {
 
 	function boxContainsBox(x0, y0, w0, h0, x1, y1, w1, h1) {
 		return (
-			(x0 + w0 < x1) &&
-			(x1 + w1 > x0) &&
-			(y0 + h0 < y1) &&
-			(y1 + h1 > y0)
+			(x0 <= x1) &&
+			(x0 + w0 >= x1 + w1) &&
+			(y0 <= y1) &&
+			(y0 + h0 >= y1 + h1)
 		)
 	}
-
+	function boxContainsHSegment(x0, y0, w0, h0, x1, y1, w1) {
+		return (
+			(x0 <= x1) &&
+			(x0 + w0 >= x1 + w1) &&
+			(y0 <= y1) &&
+			(y0 + h0 >= y1)
+		)
+	}
+	function boxContainsVSegment(x0, y0, w0, h0, x1, y1, h1) {
+		return (
+			(x0 <= x1) &&
+			(x0 + w0 >= x1) &&
+			(y0 <= y1) &&
+			(y0 + h0 >= y1 + h1)
+		)
+	}
 	function boxLine(x, y, w, h, a, b, c, d) {
 		if (boxPoint(x, y, w, h, a, b) || boxPoint(x, y, w, h, c, d)) {
 			return true;
@@ -361,6 +382,143 @@ var Collision = (() => {
 	
 	
 	
+	/*
+	returns a data structure like this one:
+	{
+		side_x: 1,
+		side_y: 1,
+		tiles:[
+			{
+				horizontal: false,
+				i: 2,
+				j0: 3,
+				j1: 6
+			},
+			{
+				horizontal: true,
+				j: 7,
+				i0 : 0
+				i1 : 2 
+			}
+		]
+	}
+	*/
+	function boxGridSweepTest(x0, y0, w, h, x1, y1, callback){
+		const dx = x1-x0;
+		const dy = y1-y0;
+		const sx = Math.sign(dx)||1;
+		const sy = Math.sign(dy)||1;
+		
+		//when touching a tile while moving to left or up the side touched is actually x+tw, we need to subtract tw
+		const tw = Math.min(sx,0);//tile width offset
+		const th = Math.min(sy,0);//tile height offset
+		
+		//store the division to avoid dividing in the loop
+		const nx = 1/dx;
+		const ny = 1/dy;
+
+		//coords of vertex that will be touching sides first both in x and y
+		const vertex_x0 = sx<0? x0 : x0+w;
+		const vertex_y0 = sy<0? y0 : y0+h;
+		
+		//the offsets to get adjacent vertices
+		const vertex_offset_x = -sx*w;
+		const vertex_offset_y = -sy*h;
+
+		//x and y are going to store the coords updates
+		let x = vertex_x0;
+		let y = vertex_y0;
+		
+		// closest tile in x and y
+		let next_tile_x = sx<0 ? Math.floor(vertex_x0) : Math.ceil(vertex_x0);
+		let next_tile_y = sy<0 ? Math.floor(vertex_y0) : Math.ceil(vertex_y0);
+		
+		let rows = [];
+		//aux
+		let row;
+		
+		let posx;
+		let posxw;
+		let posy;
+		let posyh;
+		let yh;
+		let j0;
+		let j1;
+		let xw;
+		let i0;
+		let i1;
+		
+		while(true){
+			//x(t) = x0 + dx*t
+			//so the equation for t is
+			//(x(t) - x0)/dx = t
+
+			//get t to next X
+			let tx = dx? (next_tile_x - vertex_x0)*nx : Infinity;
+			
+			//get t to next Y
+			let ty = dy? (next_tile_y - vertex_y0)*ny : Infinity;
+			if(tx>=1 && ty>=1)
+				break;
+			
+			if (tx<ty){
+				x = next_tile_x;
+				y = vertex_y0 + dy*tx;
+				yh = y + vertex_offset_y;
+				posy = Math.min(y,yh);
+				posyh = Math.max(y,yh);
+				
+				j0 = Math.floor(posy);
+				j1 = Math2.floor(posyh);
+				
+				row = {
+					horizontal: false,
+					x : x+tw,
+					y0: j0,
+					y1: j1,
+					s:sx,
+					pos:{
+						y: posy,
+						x: Math.min(x,x+vertex_offset_x)
+					}
+				};
+				next_tile_x += sx;
+			} else {
+				y = next_tile_y;
+				x = vertex_x0 + dx*ty;
+				xw = x + vertex_offset_x;
+				posx = Math.min(x,xw);
+				posxw = Math.max(x,xw);
+				
+				i0 = Math.floor(posx);
+				i1 = Math2.floor(posxw);
+				row = {
+					horizontal: true,
+					y : y+th,
+					x0: i0,
+					x1: i1,
+					s:sy,
+					pos:{
+						y: Math.min(y,y+vertex_offset_y),
+						x: posx
+					}
+				};
+				next_tile_y += sy;
+			}
+			rows.push(row);
+			//debugger;
+			if(callback && callback(row)){
+				break;
+			}
+		}
+		return {
+			sx: sx,
+			sy: sy,
+			rows: rows,
+		}
+	}
+	/**/
+	
 	function rasterizeBoxMoving(x0, y0, w, h, x1, y1, callback){
 		let ret;
 		rasterizeBox(x0,y0,w,h,callback);//se cubre la baldoza actual
@@ -496,79 +654,7 @@ var Collision = (() => {
 			}
 		}	
 	}
-		
-	function xParallelGridSegmentCast(ax,bx,y,callback){
-		let ret = [],
-			i0 = Math.floor(Math.min(ax,bx)),
-			i1 = Math2.floor(Math.max(ax,bx)),
-			j = Math.floor(y),
-			i = i0;
-		for(; i <= i1; ++i){
-			let r = callback(i,j);
-			if(r)ret.push(r);
-		}
-		return ret.length? ret:null;
-	}
-	
-	function yParallelGridSegmentCast(ay,by,x,callback){
-		let ret = [],
-			i0 = Math.floor(Math.min(ay,by)),
-			i1 = Math2.floor(Math.max(ay,by)),
-			j = Math.floor(x),
-			i = i0;
-		for(; i <= i1; ++i){
-			let r = callback(j,i);
-			if(r)ret.push(r);
-		}
-		return ret.length? ret:null;
-	}
-	
-	function xParallelGridRayCastPositive(ax,bx,y,callback){
-		let ret,
-			i0 = Math.floor(Math.min(ax,bx)),
-			i1 = Math2.floor(Math.max(ax,bx)),
-			j = Math.floor(y),
-			i = i0;
-		for(; i <= i1; ++i){
-			ret=callback(i,j);
-			if(ret!=null)return ret;
-		}
-	}
-	function yParallelGridRayCastPositive(ax,bx,y,callback){
-		let ret,
-			i0 = Math.floor(Math.min(ax,bx)),
-			i1 = Math2.floor(Math.max(ax,bx)),
-			j = Math.floor(y),
-			i = i0;
-		for(; i <= i1; ++i){
-			ret = callback(j,i);
-			if(ret!=null)return ret;
-		}
-	}
-	
-	function xParallelGridRayCastNegative(ax,bx,y,callback){
-		let ret,
-			i0 = Math.floor(Math.min(ax,bx)),
-			i1 = Math2.floor(Math.max(ax,bx)),
-			j = Math.floor(y),
-			i = i1;
-		for(; i >= i0; --i){
-			ret = callback(i,j);
-			if(ret!=null)return ret;
-		}
-	}
-	
-	function yParallelGridRayCastNegative(ax,bx,y,callback){
-		let ret,
-			i0 = Math.floor(Math.min(ax,bx)),
-			i1 = Math2.floor(Math.max(ax,bx)),
-			j = Math.floor(y),
-			i = i1;
-		for(; i >= i0; --i){
-			ret = callback(j,i);
-			if(ret!=null)return ret;
-		}
-	}
+
 	
 	function boxGridSubstep(x0, y0, w, h, x1, y1, filter) {
 			let collisions_ = [];
@@ -577,28 +663,47 @@ var Collision = (() => {
 			let dx = x1 - x0;
 			let dy = y1 - y0;
 			let x_=x1, y_=y1;
-			Collision.rasterizeBoxMoving(x0, y0, w, h, x1, y1, (i, j) => {
-				collisions_.push([i,j])
-				let found = filter(i, j);
-				if (found) {
-					touched_.push(found);
-					return true;
-				};
-				return null;
+		
+			Collision.boxGridSweepTest(x0, y0, w, h, x1, y1, (row) => {
+				let touch = null;
+				if(row.horizontal){
+					let j = row.y;
+					for(let i = row.x0; i <= row.x1; ++i){
+						collisions_.push([i,j])
+						let found = filter(i, j, row.pos.x, row.pos.y, 0, row.s);
+						if (found) {
+							found.sx = 0;
+							found.sy = row.s;
+							touched_.push(found);
+							touch = true;
+						}
+					}
+				}else{
+					let i = row.x;
+					for(let j = row.y0; j <= row.y1; ++j){
+						collisions_.push([i,j])
+						let found = filter(i, j, row.pos.x, row.pos.y, row.s, 0);
+						if (found) {
+							found.sx = row.s;
+							found.sy = 0;
+							touched_.push(found);
+							touch = true;
+						}
+					}
+				}
+				return touch;
 			});
-
 			
-			let touch = touched_[0];
-			let side;
-			if (touch) {
+			let tch = touched_[0];
+			if (tch) {
+				
 				let m = dy / dx;
 				let n = dx / dy;
 
-				let i = touch[0];
-				let j = touch[1];
-				side = Collision.boxBoxSideOfCollision(x0, y0, h, w, i, j, 1, 1, dx, dy);
-				if (side.x) {
-					if (side.x > 0) {
+				let i = tch[0];
+				let j = tch[1];
+				if (tch.sx) {
+					if (tch.sx > 0) {
 						x_ = i - w;
 					} else {
 						x_ = i + 1;
@@ -607,8 +712,8 @@ var Collision = (() => {
 					x1 = x_;
 					
 				}
-				if (side.y) {
-					if (side.y > 0) {
+				if (tch.sy) {
+					if (tch.sy > 0) {
 						y_ = j - h;
 					} else {
 						y_ = j + 1;
@@ -623,7 +728,7 @@ var Collision = (() => {
 			return{
 				x:x1,
 				y:y1,
-				side:side,
+				side: tch && {x:tch.sx, y:tch.sy},
 				touched: touched_,
 				gridtiles: collisions_
 			}
@@ -740,8 +845,10 @@ var Collision = (() => {
 	
 	mod.rasterizeBox = rasterizeBox;
 	mod.boxGridSubstep = boxGridSubstep;
+	mod.boxGridSweepTest = boxGridSweepTest;
 	
 	mod.minkowskiDiff = minkowskiDiff;
-	
+	mod.boxContainsHSegment = boxContainsHSegment;
+	mod.boxContainsVSegment = boxContainsVSegment;
 	return mod;
 })();

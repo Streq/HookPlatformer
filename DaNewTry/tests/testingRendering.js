@@ -57,6 +57,48 @@ function drawMovingBlock(a, b, c, d) {
 
 }
 
+function drawMovingBox(a, b, w, h, c, d) {
+	a *= gs;
+	b *= gs;
+	c *= gs;
+	d *= gs;
+	let w1 = w * gs;
+	let h1 = h * gs;
+
+	ctx.strokeStyle = "#ff0";
+
+	ctx.beginPath();
+	ctx.rect(a, b, w1, h1);
+	ctx.rect(c, d, w1, h1);
+
+	ctx.moveTo(a, b);
+	ctx.lineTo(c, d);
+
+	ctx.moveTo(a + w1, b);
+	ctx.lineTo(c + w1, d);
+
+	ctx.moveTo(a, b + h1);
+	ctx.lineTo(c, d + h1);
+
+	ctx.moveTo(a + w1, b + h1);
+	ctx.lineTo(c + w1, d + h1);
+	ctx.stroke();
+	ctx.closePath();
+
+
+	ctx.beginPath();
+
+	ctx.strokeStyle = "#0f0";
+	ctx.moveTo(a + (a < c) * w1, b + (b < d) * h1);
+	ctx.lineTo(c + (a < c) * w1, d + (b < d) * h1);
+
+	ctx.stroke();
+	ctx.closePath();
+
+
+
+}
+
 function drawText(x, y, text) {
 	ctx.font = '12px serif';
 	ctx.fillStyle = "white";
