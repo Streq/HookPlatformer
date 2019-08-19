@@ -1,0 +1,72 @@
+<html>
+
+<head>
+	<style>
+		/* Create two equal columns that floats next to each other */
+		.column {
+		  float: left;
+		  padding: 10px;
+		  height: 300px; /* Should be removed. Only for demonstration */
+		}
+
+		/* Clear floats after the columns */
+		.row:after {
+		  content: "";
+		  display: table;
+		  clear: both;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="row">
+		<div class="column">
+			<canvas  id="canvas" style="background-color:black"></canvas>
+		</div><div class="column">
+			<p>This is a demo</p>
+			<p>get to the white square</p>
+			<p>move with arrows, jump with Z, the usual stuff</p>
+			<p>X does something depending on your color and the background color</p>
+		</div>
+	</div>
+	<script type="module">
+		import {App, GameState} from "../index.js"
+		import {SingleArrayGrid} from "../utils/grid.js"
+		import {INPUT_CONFIG as inputConfig, TILE_SIZE as gs} from "../config/index.js"
+		
+		//mock data
+		let grid = new SingleArrayGrid(54);
+		
+		let levelData = 
+			{	spawn_point: {x:0, y:3, color:2}
+			,	static_grid:
+				{	grid: 
+					[	4,4,4,4,1,1,4,4,4,4,1,1,4,4,4,4,1,1,4,4,4,4,1,1,4,4,4,4,1,1,4,4,4,4,1,1,4,4,4,4,1,1,4,4,4,4,1,1,4,4,4,4,1,1
+					,	4,4,4,1,1,1,4,4,4,1,1,1,4,4,4,1,1,1,4,4,4,1,1,1,4,4,4,1,1,1,4,4,4,1,1,1,4,4,4,1,1,1,4,4,4,1,1,1,4,4,4,1,1,1
+					,	4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1
+					,	4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1,4,4,2,1,1,1
+					,	6,4,3,2,4,3,1,4,3,2,4,3,1,4,3,2,4,3,1,4,3,2,4,3,1,4,3,2,4,3,1,4,3,2,4,3,1,4,3,2,4,3,1,4,3,2,4,3,1,4,3,2,4,5
+					,	2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1
+					,	2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1,2,2,2,4,4,1
+					,	2,2,2,4,4,4,2,2,2,4,4,4,2,2,2,4,4,4,2,2,2,4,4,4,2,2,2,4,4,4,2,2,2,4,4,4,2,2,2,4,4,4,2,2,2,4,4,4,2,2,2,4,4,4
+					,	4,2,2,4,4,4,4,2,2,4,4,4,4,2,2,4,4,4,4,2,2,4,4,4,4,2,2,4,4,4,4,2,2,4,4,4,4,2,2,4,4,4,4,2,2,4,4,4,4,2,2,4,4,4
+					]
+				,	width: 54
+				,	height: 9
+				}
+			}
+		
+		let state = new GameState(levelData);
+		let canvas = document.getElementById("canvas");
+		let ctx = canvas.getContext("2d");
+		
+		canvas.width=gs*levelData.static_grid.width;
+		canvas.height=gs*levelData.static_grid.height;
+		
+		let app = new App(60, ctx, inputConfig);
+		app.init(state);
+	</script>
+	
+</body>
+
+</html>

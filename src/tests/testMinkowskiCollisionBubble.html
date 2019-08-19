@@ -1,0 +1,204 @@
+<html>
+
+<head>
+</head>
+
+<body>
+	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
+
+	<script src="testingRendering.js"></script>
+	<script type="module">
+		import * as Collision from "../collision/index.js"
+		import {getMousePos} from "../utils/dom.js"
+		const ts = 32;
+		const ox = 5;
+		const oy = 5;
+		
+		let b0 = {
+				x:0,
+				y:0,
+				w:1,
+				h:1
+			},
+			d0 = {
+				x0:0,
+				y0:0,
+				x1:0,
+				y1:0
+			},
+			b1 = {
+				x:5,
+				y:5,
+				w:4,
+				h:4
+			},
+			bubble = {
+				x:6,
+				y:6,
+				w:3,
+				h:2
+			
+			},
+			minkowski = {
+				
+			},
+			mink0 = {
+				
+			},
+			mink1 = {
+				
+			},
+			mink2 = {
+				
+			},
+			mink3 = {
+				
+			},
+			col = false,
+			dx = 0,
+			dy = 0;
+
+		function render() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			
+			
+			ctx.scale(ts,ts);
+			ctx.translate(ox,oy);
+			
+			
+			ctx.fillStyle = "#0f0f";
+			//if(Collision.boxPoint(minkowski.x, minkowski.y, minkowski.w, minkowski.h, 0, 0)){
+			if(col){
+				ctx.fillStyle = "red";
+			}
+			ctx.fillRect(b1.x, b1.y, b1.w, b1.h);
+			
+			ctx.fillStyle = "#ff0f";
+			ctx.fillRect(bubble.x, bubble.y, bubble.w, bubble.h);
+			
+			
+			ctx.fillStyle = "#00ff";
+			ctx.fillRect(b0.x, b0.y, b0.w, b0.h);
+			
+			
+			
+			ctx.fillStyle = "#0707";
+			ctx.fillRect(minkowski.x, minkowski.y, minkowski.w, minkowski.h);
+			
+			[mink0,mink1,mink2,mink3].forEach(
+				mink=>{
+					if(mink.touched){
+						ctx.fillStyle = "#a307";
+					}else{
+						ctx.fillStyle = "#7707";
+					}
+					ctx.fillRect(mink.x, mink.y, mink.w, mink.h);
+			
+				}
+			)
+			
+			/*
+			ctx.fillRect(minkowski.x, minkowski.y, minkowski.w, minkowski.h);
+			ctx.fillRect(minkowski.x-b0.w, minkowski.y, minkowski.w+b0.w+b0.w, 1/ts);
+			ctx.fillRect(minkowski.x-b0.w, minkowski.y+minkowski.h, minkowski.w+b0.w+b0.w, 1/ts);
+			ctx.fillRect(minkowski.x, minkowski.y-b0.h, 1/ts, minkowski.h+b0.h+b0.h);
+			ctx.fillRect(minkowski.x+minkowski.w, minkowski.y-b0.h, 1/ts, minkowski.h+b0.h+b0.h);
+			*/
+			
+			ctx.strokeStyle = "purple";
+			ctx.lineWidth = 1/ts;
+			ctx.beginPath();
+			ctx.moveTo(-dx,-dy);
+			ctx.lineTo(0,0);
+			ctx.closePath();
+			ctx.stroke();
+			
+			
+			ctx.scale(1/ts,1/ts);
+			ctx.fillStyle = "white";
+			ctx.fillRect(0, 0, 1, 1);
+			
+			ctx.resetTransform();
+			
+		}
+		function checkCol(data,bubble){
+			let tmin = data.tmin;
+			let tmax = data.tmax;
+			let tminb = data.tmin;
+			let tmaxb = data.tmax;
+			
+			col = tmin < tmax && tmax > 0 && tmax < 1;
+			return col;
+		}
+		function update(){
+			dx = d0.x1-d0.x0;
+			dy = d0.y1-d0.y0;
+			minkowski = Collision.minkowskiDiff(b0.x,b0.y,b0.w,b0.h,b1.x,b1.y,b1.w,b1.h);
+			
+			//test bubble
+			mink0 = Collision.minkowskiDiff(b0.x,b0.y,b0.w,b0.h,bubble.x		 ,bubble.y		   , bubble.w,0);
+			mink1 = Collision.minkowskiDiff(b0.x,b0.y,b0.w,b0.h,bubble.x		 ,bubble.y		   , 0,bubble.h);
+			mink2 = Collision.minkowskiDiff(b0.x,b0.y,b0.w,b0.h,bubble.x		 ,bubble.y+bubble.h, bubble.w,0);
+			mink3 = Collision.minkowskiDiff(b0.x,b0.y,b0.w,b0.h,bubble.x+bubble.w,bubble.y		   , 0,bubble.h);
+			
+			let minkx = (dx>0)?mink3:mink1;
+			let minky = (dy>0)?mink2:mink0;
+			
+			let datax = Collision.boxLineData(minkx.x, minkx.y, minkx.w, minkx.h, -dx, -dy, 0, 0);
+			let datay = Collision.boxLineData(minky.x, minky.y, minky.w, minky.h, -dx, -dy, 0, 0);
+			
+			let colx = datax.tmax >= datax.tmin && (datax.tmin > 0 && datax.tmin < 1);
+			let coly = datay.tmax >= datay.tmin && (datay.tmin > 0 && datay.tmin < 1);
+			
+			let mink;
+			
+			if(colx && coly){
+				if(datax.tmin<=datay.tmin){
+					mink=minkx;
+				}else{
+					mink=minky;
+				}
+			}else if(colx){
+				mink=minkx;
+			}else if(coly){
+				mink=minky;
+			}
+			
+			if(mink){
+				mink.touched = true;
+			}
+			
+			let data = Collision.boxLineData(minkowski.x, minkowski.y, minkowski.w, minkowski.h, -dx, -dy, 0, 0);
+			col = checkCol(data,data2);
+			
+			
+			
+		}
+		
+		render();
+
+		var pos;
+		const dothething = (e) => {
+			pos = getMousePos(canvas, e);
+			if(pos){
+				let x1 = pos.x/ts-ox;
+				let y1 = pos.y/ts-oy;
+				d0.x0 = b0.x;
+				d0.y0 = b0.y;
+				d0.x1 = b0.x = x1;
+				d0.y1 = b0.y = y1;
+			}
+			
+			update();
+		};
+		document.body.addEventListener("click", dothething);
+		var movermouse = true;
+		
+		
+		setInterval(()=>{
+			render();
+		},1000/60);
+	</script>
+</body>
+
+</html>

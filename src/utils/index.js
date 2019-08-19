@@ -1,32 +1,6 @@
-(function () {
-    define([
-        "utils/dom",
-        "utils/file",
-        "utils/loop",
-        "utils/array",
-        "utils/math",
-        "utils/transform2d",
-        "utils/vector",
-        "utils/view"
-    ], function (
-        Dom,
-        File,
-        Loop,
-        Array,
-        Math,
-        Transform2d,
-        Vector,
-        View) {
-
-        return {
-            Dom: Dom,
-            File: File,
-            Loop: Loop,
-            Array: Array,
-            Math: Math,
-            Transform2d: Transform2d,
-            Vector: Vector,
-            View: View
-        }
-    });
-})();
+export * as Color from './color.js'
+export * as Dom from './dom.js'
+export * as Grid from './grid.js'
+export * as Input from './input.js'
+export * as Loop from './loop.js'
+export * as Math2 from './math.js'

@@ -1,0 +1,44 @@
+<html>
+
+<head>
+</head>
+
+<body>
+	<canvas id="canvas" width=1000 height=1000 style="background-color:black"></canvas>
+
+	<script src="testingRendering.js"></script>
+	<script type="module">
+		import * as Collision from "../collision/index.js"
+		import {getMousePos} from "../utils/dom.js"
+		rasterizeFun = Collision.rasterizeLine;
+		drawFun = drawLine;
+		
+		document.addEventListener("mousemove", (event) => {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			let pos = getMousePos(canvas, event);
+			let x = pos.x;
+			let y = pos.y;
+			rasterize(x0 / gs, y0 / gs, x / gs, y / gs);
+		});
+
+		document.addEventListener("click", (event) => {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			let pos = getMousePos(canvas, event);
+			x0 = pos.x;
+			y0 = pos.y;
+
+		});
+		let e = {
+			x0: 0.40625,
+			y0: 0.46875,
+			x1: 0,
+			y1: 75
+		};
+
+		function el_error() {
+			rasterize(e.x0, e.y0, e.x1, e.y1);
+		}
+	</script>
+</body>
+
+</html>
