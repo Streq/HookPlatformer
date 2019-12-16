@@ -2,7 +2,7 @@ export function data(a, b, c, d, p, q, r, s){
 	var det, gamma, lambda;
 	det = (c - a) * (s - q) - (r - p) * (d - b);
 	if(det){
-		let det_ = 1/det
+		let det_ = 1/det;
 		lambda = ((s - q) * (r - a) + (p - r) * (s - b)) * det_;
 		gamma = ((b - d) * (r - a) + (c - a) * (s - b)) * det_;
 		return {

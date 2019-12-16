@@ -5,99 +5,22 @@
 
 <body>
 	<canvas id="canvas"></canvas>
+	<br>Demo
+	<br>flechitas para moverse + z para saltar + x para ???nose???
+	<br>toca el cuadradito blanco y ganas
 	<script type="module">
 		import {App, GameState} from "./src/index.js"
 		import {SingleArrayGrid} from "./src/utils/grid.js"
 		import {INPUT_CONFIG as inputConfig, TILE_SIZE as gs} from "./src/config/index.js"
-		
+		import levels from './src/app/data/levels.js'
+		let levelData = levels[0];
 		//mock data
-		let grid = new SingleArrayGrid(54);
-		let levelData =
-			{	spawn_point:
-				{	x:	0
-				,	y:	0
-				,	color:	2
-				}
-			,	static_grid: 
-				{	width:	10
-				,	height:	10
-				,	grid:
-					[	1,	1,	1,	1,	1,	1,	1,	1,	1,	1
-					,	2,	1,	1,	1,	1,	1,	1,	1,	1,	1
-					,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1
-					,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1
-					,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1
-					,	1,	1,	1,	1,	1,	1,	1,	1,	1,	1
-					,	1,	1,	1,	1,	1,	1,	1,	2,	1,	1
-					,	1,	1,	1,	1,	1,	1,	1,	1,	1,	2
-					,	1,	1,	1,	1,	1,	1,	1,	1,	2,	1
-					,	1,	1,	1,	1,	1,	1,	1,	2,	1,	1
-					]
-				}
-			,	grids: 
-				[	{	position:
-						{	x:	8
-						,	y:	4
-						}
-					,	width:	1
-					,	height:	3
-					,	grid:
-						[	2
-						,	0
-						,	2
-						]
-					,	states: 
-						[	{	gotoxy: 
-								{	x:	1
-								,	y:	null
-								}
-							,	speed:	2
-							,	cooldown:	0
-							}
-						,	{	gotoxy:
-								{	x:	8
-								,	y:	null
-								}
-							,	speed:	2
-							,	cooldown:	0
-							}
-						]
-					}
-				,	{	position:
-						{	x:	0
-						,	y:	5
-						}
-					,	width:	3
-					,	height:	1
-					,	grid:
-						[	2,	0,	2
-						]
-					,	states:
-						[	{	gotoxy:
-								{	x:	7
-								,	y:	null
-								}
-							,	speed:	2
-							,	cooldown:	0
-							}
-						,	{	gotoxy:
-								{	x:	0
-								,	y:	null
-								}
-							,	speed:	2
-							,	cooldown:	0
-							}
-						]
-					}
-				]
-			,
-			}
 		let state = new GameState(levelData);
 		let canvas = document.getElementById("canvas");
 		let ctx = canvas.getContext("2d");
 		
-		canvas.width=gs*levelData.static_grid.width;
-		canvas.height=gs*levelData.static_grid.height;
+		canvas.width=gs*levelData.static_grid.size.x;
+		canvas.height=gs*levelData.static_grid.size.y;
 		
 		let app = new App(60, ctx, inputConfig);
 		app.init(state);

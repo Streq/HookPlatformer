@@ -1,24 +1,27 @@
 import {Math2} from "../utils/index.js"
 
+import
+	{	default as boxPoint
+	,	closed as boxPointClosed
+	} from "./box/point.js"
+import
+	{	default as boxBox
+	,	closed as boxBoxClosed
+	,	containsClosed as boxContainsBoxClosed
+	,	contains as boxContainsBox
+	,	coords as boxBoxCoords
+	} from "./box/box.js"
+import
+	{	default as boxLineNew
+	,	data as boxLineData
+	} from "./box/line.js"
+import
+	{	default as lineLine
+	,	closed as lineLineClosed
+	,	lambda as lineLineLambda
+	} from "./line/line.js"
 
 
-function boxPoint(x, y, w, h, px, py) {
-	return (
-		(px > x) &&
-		(py > y) &&
-		(px < x + w) &&
-		(py < y + h)
-	);
-}
-
-function boxPointClosed(x, y, w, h, px, py) {
-	return (
-		(px >= x) &&
-		(py >= y) &&
-		(px <= x + w) &&
-		(py <= y + h)
-	);
-}
 
 function rangeRange(x0, w0, x1, w1) {
 	return (
@@ -33,32 +36,8 @@ function rangeContainsRange(x0, w0, x1, w1) {
 	);
 }
 
-function boxBox(x0, y0, w0, h0, x1, y1, w1, h1) {
-	return (
-		(x0 + w0 > x1) &&
-		(x1 + w1 > x0) &&
-		(y0 + h0 > y1) &&
-		(y1 + h1 > y0)
-	);
-}
 
-function boxBoxCoords(x0a, y0a, x1a, y1a, x0b, y0b, x1b, y1b) {
-	return (
-		(x1a > x0b) &&
-		(x1b > x0a) &&
-		(y1a > y0b) &&
-		(y1b > y0a)
-	);
-}
 
-function boxContainsBox(x0, y0, w0, h0, x1, y1, w1, h1) {
-	return (
-		(x0 <= x1) &&
-		(x0 + w0 >= x1 + w1) &&
-		(y0 <= y1) &&
-		(y0 + h0 >= y1 + h1)
-	)
-}
 function boxContainsHSegment(x0, y0, w0, h0, x1, y1, w1) {
 	return (
 		(x0 <= x1) &&
@@ -75,17 +54,7 @@ function boxContainsVSegment(x0, y0, w0, h0, x1, y1, h1) {
 		(y0 + h0 >= y1 + h1)
 	)
 }
-function boxLine(x, y, w, h, a, b, c, d) {
-	if (boxPoint(x, y, w, h, a, b) || boxPoint(x, y, w, h, c, d)) {
-		return true;
-	}
-	return (
-		lineLine(a, b, c, d, x, y, x + w, y) || //top
-		lineLine(a, b, c, d, x + w, y, x + w, y + h) || //right
-		lineLine(a, b, c, d, x, y + h, x + w, y + h) || //bot
-		lineLine(a, b, c, d, x, y, x, y + h) //left
-	);
-}
+
 
 function boxLineClosed(x, y, w, h, a, b, c, d) {
 	if (boxPointClosed(x, y, w, h, a, b) || boxPointClosed(x, y, w, h, c, d)) {
@@ -110,43 +79,7 @@ function boxLineLambda(x, y, w, h, a, b, c, d) {
 	);
 }
 
-function lineLine(a, b, c, d, p, q, r, s) {
-	var det, gamma, lambda;
-	det = (c - a) * (s - q) - (r - p) * (d - b);
-	if (det === 0) {
-		return false;
-	} else {
-		lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
-		gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
-		return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
-	}
-}
 
-function lineLineClosed(a, b, c, d, p, q, r, s) {
-	var det, gamma, lambda;
-	det = (c - a) * (s - q) - (r - p) * (d - b);
-	if (det === 0) {
-		return false;
-	} else {
-		lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
-		gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
-		return (0 <= lambda && lambda <= 1) && (0 <= gamma && gamma <= 1);
-	}
-}
-
-function lineLineLambda(a, b, c, d, p, q, r, s) {
-	var det, gamma, lambda;
-	det = (c - a) * (s - q) - (r - p) * (d - b);
-	if (det === 0) {
-		return 1; //they are parallel
-	} else {
-		lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
-		gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
-		return ((0 <= lambda && lambda < 1) && (0 <= gamma && gamma <= 1)) ?
-			lambda :
-			1;
-	}
-}
 
 function boxBoxMovingBroad(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy) {
 	return boxBoxCoords //check the bounding box of the moving box
@@ -188,26 +121,188 @@ function boxBoxMoving(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy) {
 	return (
 		boxBoxMovingBroad.apply(null, arguments) && //if bounding box doesn't collide it don't matter
 		boxLineNew //actual calc thx to my man minkowski
-		(x0 - x1 - w1 //minkdif x
+			(x0 - x1 - w1 //minkdif x
 			, y0 - y1 - h1 //minkdif y
 			, w0 + w1 //minkdif w
 			, h0 + h1 //minkdif h
 			, 0, 0 //origin
 			, -dx, -dy //opposite distance
-		)
+			)
 	);
 }
 
-function boxBoxCollision(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy) {
-	let mink = minkowskiDiff(x0, y0, w0, h0, x1, y1, w1, h1);
-	let data = boxLineData(mink.x, mink.y, mink.w, mink.h, 0, 0, -dx, -dy)
-	return data.tmin>=0 && data.tmin < 1 && data.tmax > data.tmin &&
-		{
-			t: data.tmin,
-			is_horizontal:0,
-			positive_side:0,
-		}
 
+/**
+@typedef {
+{	t:	number
+	,	is_horizontal_collision:	boolean
+	,	surface:	{x:number,y:number,w:number,h:number}
+	,	box0: 
+		{	x_at_t:	number
+		,	y_at_t:	number
+		,	is_lower_side:	boolean
+		,	surface:	{x:number,y:number,w:number,h:number}
+		}
+	,	box1: 
+		{	x_at_t:	number
+		,	y_at_t:	number
+		,	is_lower_side:	boolean
+		,	surface:	{x:number,y:number,w:number,h:number}
+		}
+	}
+} CollisionData
+*/
+
+/**
+ * @param {number} x0 
+ * @param {number} y0 
+ * @param {number} w0 
+ * @param {number} h0 
+ * @param {number} x1 
+ * @param {number} y1 
+ * @param {number} w1 
+ * @param {number} h1 
+ * @param {number} dx 
+ * @param {number} dy
+ * @returns {CollisionData} 
+ */
+export function collisionData(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy) {
+	let
+		mink = minkowskiDiff(x0, y0, w0, h0, x1, y1, w1, h1)
+	,	data = boxLineData(mink.x, mink.y, mink.w, mink.h, 0, 0, dx, dy)
+	,	there_is_a_collision = data.tmin >=0 && data.tmin < 1 && data.tmax > data.tmin
+	,	is_horizontal = data.side_tmin.x
+	;
+	return there_is_a_collision && (
+		is_horizontal
+		&& horizontalCollisionData(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy, data.tmin)
+		|| verticalCollisionData(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy, data.tmin)
+	)
+}
+
+export function horizontalCollisionData(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy, t){
+	let	
+		is_higher_side_of_box1 = (dx<0)
+	,	dyt = t*dy
+	,	y_at_t = y0 + dyt
+	,	surface_x = x1 + (is_higher_side_of_box1) * w1
+	,	surface_y = Math.max(y_at_t, y1)
+	;
+	return {
+			is_horizontal_collision: true
+		,	t: t
+		,	box0:
+			{	is_higher_side:	!is_higher_side_of_box1
+			,	x_at_t:	is_higher_side_of_box1 
+				?	x1 + w1 
+				:	x1 - w0
+			,	y_at_t:	y_at_t
+			,	surface:
+				{	x:	surface_x
+				,	w:	0
+				,	y:	y_at_t
+				,	h:	h0
+				}
+			}
+		,	box1:
+			{	is_higher_side:	is_higher_side_of_box1
+			,	x_at_t:	x1
+			,	y_at_t:	y1
+			,	surface:
+				{	x:	surface_x
+				,	w:	0
+				,	y:	y1
+				,	h:	h1
+				}
+			}
+		,	surface: 
+			{	x:	surface_x
+			,	w:	0
+			,	y:	surface_y
+			,	h:	Math.min(y_at_t+h0, y1+h1) - surface_y
+			}
+		};
+}
+
+
+export function verticalCollisionData(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy, t){
+	let	is_higher_side_of_box1 = (dy<0)
+	,	dxt = t*dx
+	,	x_at_t = x0 + dxt
+	,	surface_x = Math.max(x_at_t, x1)
+	,	surface_y = y1 + is_higher_side_of_box1 * h1
+	;
+	return {
+			is_horizontal_collision: false
+		,	t: t
+		,	box0:
+			{	is_higher_side:	!is_higher_side_of_box1
+			,	x_at_t:	x_at_t
+			,	y_at_t:	is_higher_side_of_box1
+				?	y1 + h1 
+				:	y1 - h0
+			,	surface:
+				{	x:	x_at_t
+				,	w:	w0
+				,	y:	surface_y
+				,	h:	0
+				}
+			}
+		,	box1:
+			{	is_lower_side:	is_higher_side_of_box1
+			,	x_at_t:	x1
+			,	y_at_t:	y1
+			,	surface:
+				{	x:	x1
+				,	w:	w1
+				,	y:	surface_y
+				,	h:	0
+				}
+			}
+		,	surface: 
+			{	x:	surface_x
+			,	w:	Math.min(x_at_t+w0, x1+w1) - surface_x
+			,	y:	surface_y
+			,	h:	0
+			}
+		};
+}
+
+export function boxBoxMovingFromInside(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy) {
+	let
+		vertical_segment_x_t = x1 - x0 - (dx>0 && (w0 - w1))
+	,	vertical_segment_y0 = y1 - h0
+	,	vertical_segment_y1 = y1 + h1
+	,	n = 1/dx
+	,	vertical_t = vertical_segment_x_t*n
+	,	y_at_vertical_intersection = y0+dy*vertical_t
+	,	vertical_intersection = 
+			vertical_t >= 0
+		&&	vertical_t < 1
+		&&	y_at_vertical_intersection > vertical_segment_y0 
+		&&	y_at_vertical_intersection < vertical_segment_y1
+
+	,	horizontal_segment_y_t = y1 - y0 - (dy>0 && (h0 - h1))
+	,	horizontal_segment_x0 = x1 - w0
+	,	horizontal_segment_x1 = x1 + w1
+	,	m = 1/dy
+	,	horizontal_t = (horizontal_segment_y_t)*m
+	,	x_at_horizontal_intersection = x0+dx*horizontal_t
+	,	horizontal_intersection = 
+			horizontal_t >= 0 
+		&&	horizontal_t < 1 
+		&&	x_at_horizontal_intersection > horizontal_segment_x0 
+		&&	x_at_horizontal_intersection < horizontal_segment_x1
+
+	,	intersection = vertical_intersection || horizontal_intersection
+	,	is_horizontal_segment = horizontal_intersection && (!vertical_intersection || horizontal_t < vertical_t)
+	;
+
+	return intersection && (
+		is_horizontal_segment 
+		&&	verticalCollisionData(x0, y0, w0, h0, x1, y1 + (dy>0 && h1), w1, 0, dx, dy, horizontal_t)
+		||	horizontalCollisionData(x0, y0, w0, h0, x1 + (dx>0 && w1), y1, 0, h1, dx, dy, vertical_t)
+	)
 }
 
 function minkowskiDiff(x0,y0,w0,h0,x1,y1,w1,h1){
@@ -754,113 +849,12 @@ function rasterizeRange(x0,x1,y0,y1,callback){
 
 
 
-function boxBoxInner(x0, y0, w0, h0, x1, y1, w1, h1, dx, dy){
-
-}
-
-function boxLineNew(x,y,w,h,a,b,c,d){
-	let dx = c-a;
-	let dy = d-b;
-	let n = 1/dx;
-	let m = 1/dy;
-
-	//si representamos el segmento como 
-	//S(t) = A + t * (B - A)
-	// con t >= 0 && t <= 1
-	//tonces
-	//(S(t) - A) / (B - A) = t
-	//nos fijamos cuanto es t para el borde izquierdo del rect
-	let tx1 = (x - a)*n;
-	//nos fijamos cuanto es t para el borde derecho del rect
-	let tx2 = (x+w - a)*n;
-
-	//nos fijamos t para el borde superior
-	let ty1 = (y - b)*m;
-	//nos fijamos t para el borde inferior
-	let ty2 = (y+h - b)*m;
-
-	//de haber interseccion:
-	//el tmin es la primera instancia de t para la cual x e y estan en el rect
-	//es decir, el t mayor entre txmin y tymin
-	let tmin = Math.max(Math.min(tx1, tx2), Math.min(ty1, ty2));
-	//el tmin es la ultima instancia de t para la cual x e y estan en el rect
-	//es decir, el t menor entre txmax y tymax
-	let tmax = Math.min(Math.max(tx1, tx2), Math.max(ty1, ty2));
-
-	return tmax >= tmin && (		// tmax solo es menor si los intervalos (txmin,txmax) y (tymin,tymax) no se tocan
-		(tmin > 0 && tmin < 1) ||	// la primera colision ocurre dentro del segmento
-		(tmin <= 0 && tmax > 0)		// la primera colision ocurre retrocediendo pero la segunda avanzando -> esta dentro del rect
-	);
-}
-
-function getT(x0,x1,dx){
-	return (x1 - x0)*(1/dx);
-}
-function getTMinRange(x0,xa,xb,dx){
-	return (x1 - x0)*(1/dx);
-}
-
-function chooseBySign(sign,xa,xb){
-	return sign*Math.min(xa*sign,xb*sign);
-}
-
-function boxLineData(x,y,w,h,a,b,c,d){
-	let dx = c-a;
-	let dy = d-b;
-	let n = 1/dx;
-	let m = 1/dy;
-
-	//si representamos el segmento como 
-	//S(t) = A + t * (B - A)
-	// con t >= 0 && t <= 1
-	//tonces
-	//(S(t) - A) / (B - A) = t
-	//nos fijamos cuanto es t para el borde izquierdo del rect
-	let tx1 = (x - a)*n;
-	//nos fijamos cuanto es t para el borde derecho del rect
-	let tx2 = (x+w - a)*n;
-
-	//nos fijamos t para el borde superior
-	let ty1 = (y - b)*m;
-	//nos fijamos t para el borde inferior
-	let ty2 = (y+h - b)*m;
-
-	let txmin = Math.min(tx1, tx2);
-	let tymin =  Math.min(ty1, ty2);
-
-	let txmax = Math.max(tx1, tx2);
-	let tymax =  Math.max(ty1, ty2);
-
-	//de haber interseccion:
-	//el tmin es la primera instancia de t para la cual x e y estan en el rect
-	//es decir, el t mayor entre txmin y tymin
-	let tmin = Math.max(txmin, tymin);
-	//el tmin es la ultima instancia de t para la cual x e y estan en el rect
-	//es decir, el t menor entre txmax y tymax
-	let tmax = Math.min(txmax, tymax);
-
-	let sdx = Math.sign(dx);
-	let sdy = Math.sign(dy);
-
-	return {
-		tmin:tmin,
-		tmax:tmax,
-		smin:{
-			x: (tmin == txmin) && -sdx,
-			y: (tmin == tymin) && -sdy
-		},
-		smax:{
-			x: (tmax == txmax) && sdx,
-			y: (tmax == tymax) && sdy
-		},
-	};
-}
-
 
 
 export {
-	boxPoint,
 	boxBox,
+	boxBoxClosed,
+	boxPoint,
 	lineLine,
 	lineLineLambda,
 	boxLineNew as boxLine,
@@ -869,6 +863,7 @@ export {
 	boxBoxMoving,
 	boxBoxMovingLambda,
 	boxBoxSideOfCollision,
+	boxContainsBoxClosed, 
 	boxContainsBox,
 	boxBoxIntersection,
 	getBoundingBox,
@@ -888,64 +883,3 @@ export {
 	boxContainsVSegment,
 }
 
-/*
-set up a collision testing scenario
-setup x0 for all entities
-setup dx for all entities
-
-check method 
-	takes {x0, y0, w0, h0, x1, y1, w1, h1, dx, dy}
-	returns {t, is_horizontal, is_right_or_bottom_side_of_box0, cx0, cx1, cy0, cy1}
-	
-solve method
-	takes {
-		preconditions:{x0, y0, w0, h0, x1, y1, w1, h1, dx, dy}, 
-		data:{t, is_horizontal, is_right_or_bottom_side_of_box0, cx0, cx1, cy0, cy1}
-	}
-	returns {x0f, y0f, dx, dy}
-
-check method 
-	takes {box0, box1, v0}
-	returns {t, is_horizontal, is_right_or_bottom_side_of_box0, box_touching_surface}
-	
-solve method
-	takes {
-		preconditions:{box0, box1, v0}, 
-		data:{t, is_horizontal, is_right_or_bottom_side_of_box0, box_touching_surface}
-	}
-	returns {p1, v1}
-*/
-
-
-var Physics = (()=>{
-	let mod = {}
-	
-	function boxBoxCollision(preconditions){
-		let   b0 = preconditions.box0
-			, b1 = preconditions.box1
-			, v = preconditions.v0
-			, minkowski = Intersect.minkowskiDiff(b0, b1)
-			, intersection = Intersect.boxLine(minkowski, {x0:-v.x, y0:-v.y, x1:0, y1:0})
-			, collision = intersection.t0 < intersection.t1 && intersection.t0 >= 0 && intersection.t0 < 1
-			, is_horizontal = intersection.t0_is_x
-			, is_right_or_bottom_side_of_box0 = is_horizontal && v.x>0 || !is_horizontal && v.y>0
-			, t = intersection.t0
-			, dx = v.x*t
-			, dy = v.y*t
-			;
-
-		return collision && 
-			{ t : t
-			, is_horizontal : is_horizontal
-			, is_right_or_bottom_side_of_box0 : is_right_or_bottom_side_of_box0
-			, box_touching_surface : 
-				{ x0 : Math.max(b0.x + dx, b1.x)
-				, y0 : Math.max(b0.y + dy, b1.y)
-				, x1 : Math.min(b0.x + dx + b0.w, b1.x + b1.w)
-				, y1 : Math.min(b0.y + dy + b0.h, b1.y + b1.h)
-				}
-			}
-	}
-	
-	return mod;
-})()

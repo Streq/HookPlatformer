@@ -1,7 +1,19 @@
+/**
+@template Input, Renderer
+@typedef {
+	{	update: (stack:StateStack, dt:number, input:Input)=>boolean
+	,	render:	(renderer:Renderer)=>void
+	}
+}State<InputFrame>
+
+*/
+
+
 export default class StateStack{
 	constructor(){
-		this.states=[];
-		this.q = [];
+		/**@type {Array<State<any,CanvasRenderingContext2D>>}*/
+		this.states = [];
+		this.task_queue = [];
 	}
 
 	render(renderer){
@@ -25,18 +37,18 @@ export default class StateStack{
 	}
 
 	push(state){
-		this.q.push({action:"push",state:state});
+		this.task_queue.push({action:"push",state:state});
 	}
 
 	pop(){
-		this.q.push({action:"pop"});
+		this.task_queue.push({action:"pop"});
 	}
 	clear(){
-		this.q.push({action:"clear"});
+		this.task_queue.push({action:"clear"});
 	}
 
 	processQueue(){
-		this.q.forEach((e)=>{
+		this.task_queue.forEach((e)=>{
 			switch(e.action){
 				case "push":
 					this.states.push(e.state);
@@ -49,6 +61,6 @@ export default class StateStack{
 					break;
 			}
 		});
-		this.q = [];
+		this.task_queue = [];
 	}
 }

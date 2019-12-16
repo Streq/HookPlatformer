@@ -56,3 +56,100 @@ export class RecordedInputSource{
 		return this.inputs[++index];
 	}
 }
+
+
+
+
+let keymaps =
+	{	"z":"A"
+	,	"x":"B"
+	}
+;
+const inputConfig = 
+	{	mousemove: (event, element)=>(
+			{	name: "cursor_pos"
+			,	value: getMousePos(element,event)
+			}
+		)
+	,	keydown: (event)=>{
+			let mapping = keymaps[event.key];
+			return (
+				mapping 
+				?	{	name: mapping
+					,	value: true
+					}
+				:	null
+			)
+		}
+	,	keyup: (event)=>{
+			let mapping = keymaps[event.key];
+			return (
+				mapping 
+				?	{	name: mapping
+					,	value: false
+					}
+				:	null
+			)
+		}
+	}
+
+
+/**@description Listens to html Events and fires app Events */
+export class HtmlInputHandler{
+	constructor(mappings){
+		this.mappings = mappings;
+	}
+	/**@param element {HTMLElement} */
+	listen(element, callback){
+		for(var eventType in this.mappings){
+			let handler = this.mappings[eventType];
+			//create a handler that binds the listened element 
+			//and signals the observers
+			let boundHandler = (htmlEvent)=>{
+				let appEvent = handler(event,element);
+				if(appEvent){
+					callback(appEvent);
+				}
+			};
+			
+			element.addEventListener(eventType,boundHandler);
+			//store for future unlisten
+			this[eventType] = boundHandler;
+		}
+	}
+	/**@param element {HTMLElement} */
+	unlisten(element){
+		for(var eventType in this.mappings){
+			element.removeEventListener(eventType,this[eventType]);
+		}
+	}
+}
+
+/** @description pollable input class. yeah my app polls input DEAL with it */
+export class InputState {
+	constructor(){
+		this.state = {};
+	}
+	handleEvent(input){
+		this.state[input.name] = input.value;
+	}
+	copyCurrentState(){
+		return Object.assign({}, this.state);
+	}
+}
+
+
+export class InputRecorder {
+	constructor(){
+		this.frames = [];
+		this.currentFrame = [];
+	}
+	updateFrame(){
+		this.frames.push(this.currentFrame);
+		this.currentFrame = [];
+
+	}
+	handleEvent(input){
+		this.currentFrame.push(input);
+	}
+}

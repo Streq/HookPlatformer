@@ -1,7 +1,7 @@
 import {default as StateStack} from './stateStack.js'
 import * as Loop from '../utils/loop.js'
 import {UserInputSource} from '../utils/input.js'
-
+import * as DOM from '../utils/dom.js'
 export default class App{
 
 	constructor(fps, renderer, inputConfig){
@@ -22,7 +22,7 @@ export default class App{
 	init(state){
 		let canvas = this.renderer.canvas;
 		canvas.tabIndex=-1;
-		
+		DOM.unloadScrollBar();
 		state.init();
 		this.stack.push(state);
 		

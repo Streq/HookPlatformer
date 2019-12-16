@@ -23,8 +23,8 @@ export class RAFLoop {
 	}
 
 	frame(currentTimestamp) {
-		this.render();
 		this.update(1000 / 60);
+		this.render();
 	}
 }
 
