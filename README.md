@@ -19,4 +19,4 @@ Controles:
 - X -> cambiás de color según el color del bloque que te rodea
 - La idea es que te metas dentro del cuadradito blanco y aprietes X
 
-[Play](https://streq.github.io/RGBerse)
+# [Play](https://streq.github.io/RGBerse)
