@@ -5,7 +5,7 @@ Controls:
 
 - arrows keys -> move
 - Z -> jump
-- X -> change color according to surrounding background block color
+- X -> change color according to surrounding background block color (must have your current color as a component in additive RGB, it's way simpler than it sounds)
 - The goal is to get into the white block and press X
 
 ------
@@ -16,7 +16,7 @@ Controles:
 
 - flechitas -> te movés
 - Z -> saltás
-- X -> cambiás de color según el color del bloque que te rodea
+- X -> cambiás de color según el color del bloque que te rodea (tu color actual tiene que ser un componente aditivo RGB, es mucho más simple de lo que parece)
 - La idea es que te metas dentro del cuadradito blanco y aprietes X
 
 # [Play](https://streq.github.io/RGBerse)
