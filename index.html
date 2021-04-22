@@ -5,9 +5,12 @@
 
 <body>
 	<canvas id="canvas"></canvas>
-	<br>Demo
-	<br>flechitas para moverse + z para saltar + x para ???nose???
-	<br>toca el cuadradito blanco y ganas
+	
+	<br>arrows keys -> move
+	<br>Z -> jump
+	<br>X -> change color according to surrounding background block color (must have your current color as a component in additive RGB, it's way simpler than it sounds)
+	<br>The goal is to get into the white block and press X
+
 	<script type="module">
 		import {App, GameState} from "./src/index.js"
 		import {SingleArrayGrid} from "./src/utils/grid.js"
