@@ -16,7 +16,7 @@ Controles:
 
 - flechitas -> te movés
 - Z -> saltás
-- X -> cambiás de color según el color del bloque que te rodea (tu color actual tiene que ser un componente aditivo RGB, es mucho más simple de lo que parece)
+- X -> cambiás de color según el color del bloque que te rodea (tu color actual tiene que ser un componente aditivo RGB, suena complicado pero es una boludez)
 - La idea es que te metas dentro del cuadradito blanco y aprietes X
 
 # [Play](https://streq.github.io/RGBerse)
